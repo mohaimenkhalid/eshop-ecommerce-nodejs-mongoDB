@@ -1,6 +1,6 @@
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const categorySchema = new Schema(
+const brandSchema = new Schema(
     {
         name: {
             type: String,
@@ -22,12 +22,6 @@ const categorySchema = new Schema(
             default: null,
         },
 
-        parentCategory: {
-            type: Types.ObjectId,
-            ref: "Category",
-            default: null,
-        },
-
         isFeatured: {
             type: Boolean,
             default: false,
@@ -37,6 +31,7 @@ const categorySchema = new Schema(
             type: String,
             enum: ["ACTIVE", "INACTIVE"],
             default: "ACTIVE",
+            required: true,
         },
 
         isDeleted: {
@@ -50,4 +45,4 @@ const categorySchema = new Schema(
     }
 );
 
-module.exports = mongoose.model('Category', categorySchema);
+module.exports = mongoose.model('Brand', brandSchema);
