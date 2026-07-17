@@ -54,3 +54,5 @@ temp/
 # Database (if using SQLite)
 *.sqlite
 *.sqlite3
+
+agent.md

@@ -1,6 +1,7 @@
-import { Schema } from "mongoose";
+const mongoose = require('mongoose');
 
-const userSchema = new Schema(
+
+const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
@@ -10,7 +11,6 @@ const userSchema = new Schema(
 
         phone: {
             type: String,
-            required: true,
             unique: true,
             trim: true,
             index: true,
@@ -19,6 +19,7 @@ const userSchema = new Schema(
         email: {
             type: String,
             unique: true,
+            required: true,
             sparse: true,
             lowercase: true,
             trim: true,

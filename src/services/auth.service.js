@@ -8,20 +8,14 @@ const createError = (message, statusCode = 400) => {
     return error;
 };
 
-const usernameRegex = /^[a-zA-Z0-9_]+$/;
 
-exports.signup = async ({ name, username, password }) => {
-    if (!usernameRegex.test(username)) {
-        throw createError(
-            'Username can only contain letters, numbers, and underscores. Spaces are not allowed.',
-            400
-        );
-    }
+exports.signup = async ({ name, phone, email, password }) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     return userRepository.createUser({
         name,
-        username,
+        phone,
+        email,
         password: hashedPassword,
     });
 };

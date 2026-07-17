@@ -1,4 +1,18 @@
 module.exports = (err, req, res, next) => {
+    // Joi Validation Error
+    if (err.isJoi) {
+        const errors = {};
+
+        err.details.forEach((error) => {
+            errors[error.path[0]] = error.message.replace(/"/g, "");
+        });
+
+        return res.status(400).json({
+            success: false,
+            message: "Validation failed",
+            errors,
+        });
+    }
 
     // Validation Error
     if (err.name === "ValidationError") {
@@ -22,7 +36,7 @@ module.exports = (err, req, res, next) => {
             success: false,
             message: `${field} already exists`,
             errors: {
-                [field]: `${field} must be unique`,
+                [field]: `${field} is already in use`,
             },
         });
     }
