@@ -32,6 +32,7 @@ const cartSchema = new Schema(
     }
 );
 
+//combined index
 cartSchema.index(
     {
         user: 1,
@@ -42,8 +43,9 @@ cartSchema.index(
     }
 );
 
-cartSchema.index({
-    user: 1,
-});
+//general index
+// cartSchema.index({
+//     user: 1,
+// });
 
 module.exports = mongoose.model("Cart", cartSchema)
