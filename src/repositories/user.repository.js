@@ -9,8 +9,8 @@ const findByUsername = async (username) => {
     return User.findOne({ username });
 };
 
-const findByUsernameWithPassword = async (username) => {
-    return User.findOne({ username }).select('+password');
+const findByEmailWithPassword = async (email) => {
+    return User.findOne({ email }).select('+password');
 };
 
 const findAllUsers = async () => {
@@ -20,6 +20,6 @@ const findAllUsers = async () => {
 module.exports = {
     createUser,
     findByUsername,
-    findByUsernameWithPassword,
+    findByEmailWithPassword,
     findAllUsers,
 };

@@ -50,6 +50,20 @@ module.exports = (err, req, res, next) => {
             },
         });
     }
+    if (err.name === "Error") {
+        const errors = {};
+
+        err.errors && err.errors.length && Object.values(err.errors).forEach((error) => {
+            errors[error.path] = error.message;
+        });
+
+        return res.status(err.statusCode).json({
+            success: false,
+            message: err.message,
+            errors
+        });
+    }
+
     return res.status(500).json({
         success: false,
         message: "Internal Server Error",

@@ -35,3 +35,20 @@ exports.signUpSchema = Joi.object({
         .allow("")
         .pattern(/^01[3-9]\d{8}$/)
 });
+
+exports.signInSchema = Joi.object({
+    email: Joi.string()
+        .email()
+        .required()
+        .messages({
+            "string.email": "Please enter a valid email address",
+            "string.empty": "Email is required",
+            "any.required": "Email is required",
+        }),
+    password: Joi.string()
+        .required()
+        .messages({
+            "string.empty": "Password is required",
+            "any.required": "Password is required",
+        }),
+});
