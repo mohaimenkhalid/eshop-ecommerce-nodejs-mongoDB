@@ -1,4 +1,4 @@
-import brandRepository from '../repositories/brand.reporsitory';
+const brandRepository = require('../repositories/brand.reporsitory');
 const {generateSlug} = require('../utils/slugify')
 const uploadService = require('../services/upload.service')
 

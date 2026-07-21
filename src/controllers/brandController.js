@@ -1,4 +1,4 @@
-import brandService from '../services/brand.service';
+const brandService = require('../services/brand.service');
 
 exports.create = async (req, res, next) => {
     try {

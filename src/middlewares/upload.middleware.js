@@ -1,7 +1,7 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-const uploadService = require('../services/upload.service')
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const uploadConfig = require("../config/upload.config");
 
 module.exports = ({
                            folder,
