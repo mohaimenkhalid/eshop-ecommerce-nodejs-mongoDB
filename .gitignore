@@ -56,3 +56,5 @@ temp/
 *.sqlite3
 
 agent.md
+
+src/uploads
