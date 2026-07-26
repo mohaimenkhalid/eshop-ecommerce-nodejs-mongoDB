@@ -44,10 +44,10 @@ module.exports = (err, req, res, next) => {
     if (err.name === "ReferenceError") {
         return res.status(400).json({
             success: false,
-            message: "Invalid ID",
-            errors: {
-                [err.path]: "Invalid ObjectId",
-            },
+            message: err.message,
+            // errors: {
+            //     [err.path]: "Invalid ObjectId",
+            // },
         });
     }
     if (err.name === "Error") {

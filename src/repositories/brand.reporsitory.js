@@ -1,6 +1,6 @@
 const Brand = require('../models/brand.model');
 
-exports.createBrand = (payload) => {
+exports.createBrand = async (payload) => {
     const brand = new Brand(payload);
-    return brand.save();
+    return await brand.save();
 }

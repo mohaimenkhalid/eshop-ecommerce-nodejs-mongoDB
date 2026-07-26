@@ -31,7 +31,6 @@ const brandSchema = new mongoose.Schema(
             type: String,
             enum: ["ACTIVE", "INACTIVE"],
             default: "ACTIVE",
-            required: true,
         },
 
         isDeleted: {

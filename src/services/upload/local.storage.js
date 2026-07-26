@@ -1,3 +1,7 @@
+const fs = require("fs");
+const path = require("path");
+
+
 class LocalStorage {
     async uploadSingle(file, folder) {
         if (!file) return null;
@@ -18,7 +22,14 @@ class LocalStorage {
     }
 
     async deleteFile(filePath) {
+        if (!filePath) return;
 
+        const absolutePath = path.resolve(filePath);
+
+        if (!fs.existsSync(absolutePath)) {
+            return;
+        }
+        await fs.promises.unlink(absolutePath);
     }
 }
 
