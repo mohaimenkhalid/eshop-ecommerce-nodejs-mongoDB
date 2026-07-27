@@ -15,13 +15,12 @@ exports.create = async (req, res, next) => {
 
 exports.getPaginateBrands = async (req, res, next) => {
     try {
-        console.log(req.query);
         const {page, limit, name, status} = req.query;
         const payload = {page, limit, name, status};
-        const brands = await brandService.getPaginateBrands(payload);
+        const response = await brandService.getPaginateBrands(payload);
         return res.status(200).json({
             success: true,
-            brands: brands
+            ...response
         })
     } catch (e) {
         next(e)

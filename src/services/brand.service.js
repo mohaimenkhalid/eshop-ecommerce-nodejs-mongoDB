@@ -47,13 +47,24 @@ exports.getPaginateBrands = async ({page, limit, name, status}) => {
         filter.status = status;
     }
 
-    return await brandRepository.getPaginateBrands({
-        skip,
-        limit: limitNumber,
-        filter
-    });
+    const [brands, total] = await Promise.all([
+        brandRepository.getPaginateBrands({skip, limit: limitNumber, filter }),
+        brandRepository.getTotalBrandCount(filter),
+    ]);
+    const totalPages = Math.ceil(total / limitNumber);
+    return {
+        data: brands,
+        pagination: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+            totalPages,
+            hasPrev: pageNumber > 1,
+            hasNext: pageNumber < totalPages,
+        }
+    }
 }
 
 exports.getAllBrands = async () => {
-    await brandRepository.getAllBrands();
+    return await brandRepository.getAllBrands();
 }

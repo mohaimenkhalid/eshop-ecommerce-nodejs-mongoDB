@@ -5,14 +5,21 @@ exports.createBrand = async (payload) => {
     return await brand.save();
 }
 
-exports.getPaginateBrands = async ({skip, limit, filter}) => {
+exports.getPaginateBrands = ({skip, limit, filter}) => {
     return Brand.find(filter)
-        .skip(skip)
-        .limit(limit)
-        .select('-__v')
-        .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .select('-__v')
+            .sort({ createdAt: -1 })
+            .lean();
 }
 
-exports.getAllBrands = async () => {
-    return Brand.find().select('-__v');
+exports.getAllBrands = () => {
+    return Brand.find()
+        .sort({ createdAt: -1 })
+        .lean();
+}
+
+exports.getTotalBrandCount = async (filter) => {
+    return Brand.countDocuments(filter);
 }
