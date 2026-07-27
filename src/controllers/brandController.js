@@ -13,6 +13,20 @@ exports.create = async (req, res, next) => {
     }
 }
 
+exports.update = async (req, res, next) => {
+    try {
+        const updatedBrand = await brandService.update(req.params.id, req.body, req.file)
+        return res.status(200).json({
+            success: true,
+            brand: updatedBrand,
+            message: "Brand updated successfully",
+        });
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+}
+
 exports.getPaginateBrands = async (req, res, next) => {
     try {
         const {page, limit, name, status} = req.query;

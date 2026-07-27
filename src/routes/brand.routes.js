@@ -4,14 +4,18 @@ const brandController = require('../controllers/brandController');
 const upload = require('../middlewares/upload.middleware')
 const FILE_TYPES = require('../constants/fileTypes')
 
+router.get('/', brandController.getPaginateBrands)
+router.get('/all', brandController.getAllBrands)
 router.post("/create", upload({
     folder: "brands",
     allowedMimeTypes: FILE_TYPES.IMAGES,
 }).single("image"), brandController.create)
 
-router.get('/', brandController.getPaginateBrands)
+router.patch('/:id', upload({
+    folder: "brands",
+    allowedMimeTypes: FILE_TYPES.IMAGES,
+}).single("image"), brandController.update)
 
-router.get('/all', brandController.getAllBrands)
 
 
 module.exports = router;

@@ -5,6 +5,13 @@ exports.createBrand = async (payload) => {
     return await brand.save();
 }
 
+exports.updateById = (id, payload) => {
+    return Brand.findByIdAndUpdate(id, payload, {
+        returnDocument: 'after',
+        runValidators: true,
+    })
+}
+
 exports.getPaginateBrands = ({skip, limit, filter}) => {
     return Brand.find(filter)
             .skip(skip)
@@ -23,3 +30,7 @@ exports.getAllBrands = () => {
 exports.getTotalBrandCount = async (filter) => {
     return Brand.countDocuments(filter);
 }
+
+exports.getBrandById = (id) => {
+    return Brand.findById(id);
+};

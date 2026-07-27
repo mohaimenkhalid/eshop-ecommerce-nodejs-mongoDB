@@ -1,7 +1,7 @@
 const brandRepository = require('../repositories/brand.reporsitory');
 const generateSlug = require('../utils/slugify')
 const uploadService = require('../services/upload.service')
-
+const  createError = require('../utils/createError')
 exports.create = async (req) => {
     try {
         const {name, isFeatured, status} = req.body;
@@ -18,6 +18,54 @@ exports.create = async (req) => {
         }
         await brandRepository.createBrand(payload)
     } catch (e) {
+        //if faild to insert data in database then upload file remove from here
+        if (req.file) {
+            await uploadService.deleteFile(req.file.path)
+        }
+        throw e;
+    }
+}
+
+exports.update = async (id, body, file) => {
+    try {
+        const {name, isFeatured, status} = body;
+        let uploadedImage = null;
+        if(file) {
+            uploadedImage = await uploadService.uploadSingle(file, "brands");
+        }
+
+        let payload = {};
+        if(name) {
+            payload.name = name;
+            payload.slug = generateSlug(name);
+    }
+
+        if(uploadedImage) {
+         payload.image = uploadedImage?.url;
+        }
+
+        if (typeof isFeatured !== "undefined") {
+            payload.isFeatured = isFeatured;
+        }
+
+        if (status) {
+            payload.status = status;
+        }
+        const brand = await brandRepository.getBrandById(id);
+
+        if (!brand) {
+            throw createError("Brand not found", 404)
+        }
+
+        const updatedBrand = await brandRepository.updateById(id, payload);
+
+        if (updatedBrand && uploadedImage?.url && brand.image) {
+            await uploadService.deleteFile(`src${brand.image}`)
+        }
+        return updatedBrand;
+
+    } catch (e) {
+        //if faild to insert data in database then upload file remove from here
         if (req.file) {
             await uploadService.deleteFile(req.file.path)
         }
