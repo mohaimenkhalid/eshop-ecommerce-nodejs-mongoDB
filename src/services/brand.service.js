@@ -25,6 +25,35 @@ exports.create = async (req) => {
     }
 }
 
-exports.getBrands = async (req) => {
-    await brandRepository.getAllBrands(req);
+exports.getPaginateBrands = async ({page, limit, name, status}) => {
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.min(
+        Math.max(Number(limit) || 10, 1),
+        100
+    );
+    const skip = (pageNumber - 1) * limitNumber;
+    const filter = {
+        isDeleted: false,
+    };
+
+    if (name) {
+        filter.name = {
+            $regex: name,
+            $options: "i",
+        };
+    }
+
+    if (status) {
+        filter.status = status;
+    }
+
+    return await brandRepository.getPaginateBrands({
+        skip,
+        limit: limitNumber,
+        filter
+    });
+}
+
+exports.getAllBrands = async () => {
+    await brandRepository.getAllBrands();
 }

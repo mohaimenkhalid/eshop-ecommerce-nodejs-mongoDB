@@ -4,6 +4,6 @@ const authRoutes = require('./auth.routes')
 const brandRoutes = require('./brand.routes')
 
 router.use('/auth', authRoutes)
-router.use('/brand', brandRoutes)
+router.use('/brands', brandRoutes)
 
 module.exports = router;
