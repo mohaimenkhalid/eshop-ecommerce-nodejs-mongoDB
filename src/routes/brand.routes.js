@@ -9,4 +9,6 @@ router.post("/create", upload({
     allowedMimeTypes: FILE_TYPES.IMAGES,
 }).single("image"), brandController.create)
 
+router.get('/', brandController.getAllBrand)
+
 module.exports = router;

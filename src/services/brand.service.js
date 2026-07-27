@@ -24,3 +24,7 @@ exports.create = async (req) => {
         throw e;
     }
 }
+
+exports.getBrands = async (req) => {
+    await brandRepository.getAllBrands(req);
+}
