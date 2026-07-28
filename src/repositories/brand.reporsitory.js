@@ -32,5 +32,13 @@ exports.getTotalBrandCount = async (filter) => {
 }
 
 exports.getBrandById = (id) => {
-    return Brand.findById(id);
+    return Brand.findById(id).lean();
 };
+
+exports.softDeleteById = (id) => {
+    return Brand.findByIdAndUpdate(id, {
+        isDeleted: true
+    }, {
+        returnDocument: 'after',
+    })
+}

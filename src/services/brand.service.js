@@ -18,7 +18,7 @@ exports.create = async (req) => {
         }
         await brandRepository.createBrand(payload)
     } catch (e) {
-        //if faild to insert data in database then upload file remove from here
+        //if failed to insert data in database then upload file remove from here
         if (req.file) {
             await uploadService.deleteFile(req.file.path)
         }
@@ -65,7 +65,7 @@ exports.update = async (id, body, file) => {
         return updatedBrand;
 
     } catch (e) {
-        //if faild to insert data in database then upload file remove from here
+        //if failed to insert data in database then upload file remove from here
         if (req.file) {
             await uploadService.deleteFile(req.file.path)
         }
@@ -115,4 +115,19 @@ exports.getPaginateBrands = async ({page, limit, name, status}) => {
 
 exports.getAllBrands = async () => {
     return await brandRepository.getAllBrands();
+}
+
+exports.delete = async (id) => {
+    try {
+        const brand = await brandRepository.getBrandById(id);
+        if (!brand) {
+            throw createError("Brand not found", 404)
+        }
+        if (brand.isDeleted) {
+            throw createError("Brand already deleted", 400);
+        }
+        return await brandRepository.softDeleteById(id)
+    } catch (e) {
+        throw e;
+    }
 }

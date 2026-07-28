@@ -16,6 +16,8 @@ router.patch('/:id', upload({
     allowedMimeTypes: FILE_TYPES.IMAGES,
 }).single("image"), brandController.update)
 
+router.delete('/:id', brandController.delete)
+
 
 
 module.exports = router;
