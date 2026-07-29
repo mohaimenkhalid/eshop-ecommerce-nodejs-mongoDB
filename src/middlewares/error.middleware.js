@@ -4,7 +4,7 @@ module.exports = (err, req, res, next) => {
         const errors = {};
 
         err.details.forEach((error) => {
-            errors[error.path[0]] = error.message.replace(/"/g, "");
+            errors[error.path[0] || 'body'] = error.message.replace(/"/g, "");
         });
 
         return res.status(400).json({
@@ -16,6 +16,7 @@ module.exports = (err, req, res, next) => {
 
     // Validation Error
     if (err.name === "ValidationError") {
+
         const errors = {};
 
         Object.values(err.errors).forEach((error) => {
@@ -57,13 +58,13 @@ module.exports = (err, req, res, next) => {
             errors[error.path] = error.message;
         });
 
-        return res.status(err.statusCode).json({
+        return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message,
             errors
         });
     }
-
+    console.log(err)
     return res.status(500).json({
         success: false,
         message: "Internal Server Error",

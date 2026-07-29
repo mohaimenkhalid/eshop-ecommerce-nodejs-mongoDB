@@ -6,6 +6,7 @@ const app = express();
 
 //application configuration bindings
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // API Layer Route entry hook
 app.use('/', apiRoutes)
