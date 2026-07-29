@@ -25,3 +25,15 @@ exports.getAllCategories = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.create = async (req, res, next) => {
+    try {
+        await categoryService.create(req);
+        return res.status(201).json({
+            success: true,
+            message: 'Category created successfully'
+        })
+    } catch (e) {
+        next(e)
+    }
+}

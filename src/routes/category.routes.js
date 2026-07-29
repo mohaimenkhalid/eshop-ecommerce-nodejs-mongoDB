@@ -1,8 +1,16 @@
 const express = require("express")
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
+const upload = require('../middlewares/upload.middleware')
+const FILE_TYPES = require('../constants/fileTypes')
+const validateRequest = require('../middlewares/validateRequest.middleware')
+const { createCategorySchema } = require('../validations/category.validation')
 
 router.get('/', categoryController.getPaginateCategories)
 router.get('/all', categoryController.getAllCategories)
+router.post("/create", upload({
+    folder: "categories",
+    allowedMimeTypes: FILE_TYPES.IMAGES,
+}).single("image"), validateRequest(createCategorySchema), categoryController.create)
 
 module.exports = router;

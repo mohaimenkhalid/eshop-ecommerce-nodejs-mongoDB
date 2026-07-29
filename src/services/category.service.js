@@ -50,3 +50,37 @@ exports.getPaginateCategories = async ({page, limit, name, status, parentCategor
 exports.getAllCategories = async () => {
     return await categoryRepository.getAllCategories();
 }
+
+exports.create = async (req) => {
+    try {
+        const {name, parentCategory, isFeatured, status} = req.body;
+        let uploadedImage = null;
+        if(req.file) {
+            uploadedImage = await uploadService.uploadSingle(req.file, "categories");
+        }
+
+        // Validate if parentCategory exists in DB
+        if (parentCategory) {
+            const parent = await categoryRepository.getCategoryById(parentCategory);
+            if (!parent) {
+                throw createError("Parent category not found", 404);
+            }
+        }
+
+        const payload = {
+            name,
+            slug: generateSlug(name),
+            image: uploadedImage?.url,
+            parentCategory: parentCategory || null,
+            isFeatured,
+            status,
+        }
+        await categoryRepository.createCategory(payload)
+    } catch (e) {
+        // if failed to insert data in database then upload file remove from here
+        if (req.file) {
+            await uploadService.deleteFile(req.file.path)
+        }
+        throw e;
+    }
+}
