@@ -4,7 +4,7 @@ const brandController = require('../controllers/brandController');
 const upload = require('../middlewares/upload.middleware')
 const FILE_TYPES = require('../constants/fileTypes')
 const validateRequest = require('../middlewares/validateRequest.middleware')
-const { createBrandSchema } = require('../validations/brand.validation')
+const { createBrandSchema, updateBrandSchema } = require('../validations/brand.validation')
 
 router.get('/', brandController.getPaginateBrands)
 router.get('/all', brandController.getAllBrands)
@@ -16,7 +16,7 @@ router.post("/create", upload({
 router.patch('/:id', upload({
     folder: "brands",
     allowedMimeTypes: FILE_TYPES.IMAGES,
-}).single("image"), brandController.update)
+}).single("image"), validateRequest(updateBrandSchema), brandController.update)
 
 router.delete('/:id', brandController.delete)
 

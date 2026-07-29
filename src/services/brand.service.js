@@ -66,8 +66,8 @@ exports.update = async (id, body, file) => {
 
     } catch (e) {
         //if failed to insert data in database then upload file remove from here
-        if (req.file) {
-            await uploadService.deleteFile(req.file.path)
+        if (file) {
+            await uploadService.deleteFile(file.path)
         }
         throw e;
     }
