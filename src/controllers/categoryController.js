@@ -50,3 +50,15 @@ exports.update = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.delete = async (req, res, next) => {
+    try {
+        await categoryService.delete(req.params.id)
+        return res.status(200).json({
+            success: true,
+            message: "Category deleted successfully"
+        })
+    } catch (e) {
+        next(e)
+    }
+}

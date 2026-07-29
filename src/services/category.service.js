@@ -144,3 +144,18 @@ exports.update = async (id, body, file) => {
         throw e;
     }
 }
+
+exports.delete = async (id) => {
+    try {
+        const category = await categoryRepository.getCategoryById(id);
+        if (!category) {
+            throw createError("Category not found", 404)
+        }
+        if (category.isDeleted) {
+            throw createError("Category already deleted", 400);
+        }
+        return await categoryRepository.softDeleteById(id)
+    } catch (e) {
+        throw e;
+    }
+}

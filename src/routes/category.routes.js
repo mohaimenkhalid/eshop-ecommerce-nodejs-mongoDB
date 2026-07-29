@@ -18,4 +18,6 @@ router.patch('/:id', upload({
     allowedMimeTypes: FILE_TYPES.IMAGES,
 }).single("image"), validateRequest(updateCategorySchema), categoryController.update)
 
+router.delete('/:id', categoryController.delete)
+
 module.exports = router;
