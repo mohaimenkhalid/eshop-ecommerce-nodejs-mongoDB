@@ -37,3 +37,16 @@ exports.create = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.update = async (req, res, next) => {
+    try {
+        const updatedCategory = await categoryService.update(req.params.id, req.body, req.file)
+        return res.status(200).json({
+            success: true,
+            category: updatedCategory,
+            message: "Category updated successfully",
+        });
+    } catch (e) {
+        next(e)
+    }
+}

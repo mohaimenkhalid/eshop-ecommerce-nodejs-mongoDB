@@ -84,3 +84,63 @@ exports.create = async (req) => {
         throw e;
     }
 }
+
+exports.update = async (id, body, file) => {
+    try {
+        const {name, parentCategory, isFeatured, status} = body;
+        let uploadedImage = null;
+        if(file) {
+            uploadedImage = await uploadService.uploadSingle(file, "categories");
+        }
+
+        let payload = {};
+        if(name) {
+            payload.name = name;
+            payload.slug = generateSlug(name);
+        }
+
+        if(uploadedImage) {
+            payload.image = uploadedImage?.url;
+        }
+
+        if (typeof isFeatured !== "undefined") {
+            payload.isFeatured = isFeatured;
+        }
+
+        if (status) {
+            payload.status = status;
+        }
+
+        if (typeof parentCategory !== "undefined") {
+            if (parentCategory === id) {
+                throw createError("A category cannot be its own parent", 400);
+            }
+            if (parentCategory) {
+                const parent = await categoryRepository.getCategoryById(parentCategory);
+                if (!parent) {
+                    throw createError("Parent category not found", 404);
+                }
+            }
+            payload.parentCategory = parentCategory || null;
+        }
+
+        const category = await categoryRepository.getCategoryById(id);
+
+        if (!category) {
+            throw createError("Category not found", 404)
+        }
+
+        const updatedCategory = await categoryRepository.updateById(id, payload);
+
+        if (updatedCategory && uploadedImage?.url && category.image) { //if category updated, new uploaded image url, prev category image if exist
+            await uploadService.deleteFile(`src${category.image}`)
+        }
+        return updatedCategory;
+
+    } catch (e) {
+        if (file) {
+            await uploadService.deleteFile(file.path)
+        }
+        throw e;
+    }
+}
