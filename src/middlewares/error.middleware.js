@@ -2,7 +2,7 @@ module.exports = (err, req, res, next) => {
     // Joi Validation Error
     if (err.isJoi) {
         const errors = {};
-
+        console.log(err.details)
         err.details.forEach((error) => {
             errors[error.path[0] || 'body'] = error.message.replace(/"/g, "");
         });

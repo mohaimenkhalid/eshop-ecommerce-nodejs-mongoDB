@@ -1,6 +1,6 @@
-import mongoose, { Schema, Types } from "mongoose";
+const mongoose = require('mongoose')
 
-const variantSchema = new Schema(
+const variantSchema = new mongoose.Schema(
     {
         sku: {
             type: String,
@@ -42,7 +42,7 @@ const variantSchema = new Schema(
     { _id: false }
 );
 
-const productSchema = new Schema(
+const productSchema = new mongoose.Schema(
     {
         name: {
             type: String,
@@ -64,18 +64,24 @@ const productSchema = new Schema(
         },
 
         category: {
-            type: Types.ObjectId,
+            type: mongoose.Types.ObjectId,
             ref: "Category",
             required: true,
         },
 
         brand: {
-            type: Types.ObjectId,
+            type: mongoose.Types.ObjectId,
             ref: "Brand",
             required: true,
         },
 
-        variants: [variantSchema],
+        variants: {
+            type: [variantSchema],
+            validate: {
+                validator: (variants) => variants.length > 0,
+                message: "At least one variant is required."
+            }
+        },
 
         isFeatured: {
             type: Boolean,
