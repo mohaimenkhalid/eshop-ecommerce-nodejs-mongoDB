@@ -94,23 +94,23 @@ exports.createProductSchema = Joi.object({
             "boolean.base": "isFeatured must be a boolean value",
         }),
 
-    status: Joi.string()
-        .valid("ACTIVE", "INACTIVE")
-        .empty("")
-        .optional()
-        .messages({
-            "string.base": "status must be a string",
-            "any.only": "status must be either ACTIVE or INACTIVE",
-        }),
-    variants: Joi.array()
-        .items(variantSchema)
-        .min(1)
-        .required()
-        .messages({
-            "array.base": "Variants must be an array",
-            "array.min": "At least one variant is required",
-            "any.required": "Variants are required",
-        })
+    // status: Joi.string()
+    //     .valid("ACTIVE", "INACTIVE")
+    //     .empty("")
+    //     .optional()
+    //     .messages({
+    //         "string.base": "status must be a string",
+    //         "any.only": "status must be either ACTIVE or INACTIVE",
+    //     }),
+    // variants: Joi.array()
+    //     .items(variantSchema)
+    //     .min(1)
+    //     .required()
+    //     .messages({
+    //         "array.base": "Variants must be an array",
+    //         "array.min": "At least one variant is required",
+    //         "any.required": "Variants are required",
+    //     })
 
 }).options({
         allowUnknown: false,

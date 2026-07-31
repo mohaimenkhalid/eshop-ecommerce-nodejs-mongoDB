@@ -39,7 +39,7 @@ const variantSchema = new mongoose.Schema(
             },
         ],
     },
-    { _id: false }
+    { _id: true }
 );
 
 const productSchema = new mongoose.Schema(
@@ -77,10 +77,11 @@ const productSchema = new mongoose.Schema(
 
         variants: {
             type: [variantSchema],
-            validate: {
-                validator: (variants) => variants.length > 0,
-                message: "At least one variant is required."
-            }
+            default: [],
+            // validate: {
+            //     validator: (v) => v.length > 0,
+            //     message: "At least one variant is required.",
+            // },
         },
 
         isFeatured: {
@@ -91,7 +92,7 @@ const productSchema = new mongoose.Schema(
         status: {
             type: String,
             enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE",
+            default: "INACTIVE",
         },
 
         isDeleted: {
