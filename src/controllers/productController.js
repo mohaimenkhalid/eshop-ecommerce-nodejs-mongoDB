@@ -13,3 +13,17 @@ exports.create = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.update = async (req, res, next) => {
+    try {
+        const product = await productService.update(req.params.id, req.body);
+        return res.status(201).json({
+            success: true,
+            message: "Product updated successfully!",
+            product
+        })
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+}

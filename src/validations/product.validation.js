@@ -118,3 +118,70 @@ exports.createProductSchema = Joi.object({
     .messages({
         "object.unknown": "{{#label}} is not allowed",
     });
+
+
+exports.updateProductSchema = Joi.object({
+    name: Joi.string()
+        .trim()
+        .min(3)
+        .max(150)
+        .required()
+        .messages({
+            "string.base": "name must be a string",
+            "string.empty": "name is required",
+            "string.min": "name must be at least 3 characters",
+            "string.max": "name cannot exceed 150 characters",
+            "any.required": "name is required",
+        }),
+
+    description: Joi.string()
+        .trim()
+        .allow("")
+        .optional()
+    ,
+
+    category: Joi.string()
+        .hex()
+        .length(24)
+        .required()
+        .messages({
+            "string.base": "category must be a valid ID",
+            "string.hex": "category must be a valid ID",
+            "string.length": "category ID must be exactly 24 characters long",
+            "any.required": "category is required",
+        }),
+    brand: Joi.string()
+        .hex()
+        .length(24)
+        .required()
+        .messages({
+            "string.base": "brand must be a valid ID",
+            "string.hex": "brand must be a valid ID",
+            "string.length": "brand ID must be exactly 24 characters long",
+            "any.required": "brand is required",
+        }),
+
+    isFeatured: Joi.boolean()
+        .empty("")
+        .optional()
+        .messages({
+            "boolean.base": "isFeatured must be a boolean value",
+        }),
+
+    status: Joi.string()
+        .valid("ACTIVE", "INACTIVE")
+        .empty("")
+        .optional()
+        .messages({
+            "string.base": "status must be a string",
+            "any.only": "status must be either ACTIVE or INACTIVE",
+        }),
+
+}).min(1)
+    .options({
+    allowUnknown: false,
+})
+    .messages({
+        "object.min": "At least one field is required for update",
+        "object.unknown": "{{#label}} is not allowed",
+    });
