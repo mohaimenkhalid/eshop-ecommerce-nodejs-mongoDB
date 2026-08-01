@@ -27,3 +27,18 @@ exports.update = async (req, res, next) => {
         next(e)
     }
 }
+
+
+exports.addVariant = async (req, res, next) => {
+    try {
+        const product = await productService.addVariant(req.params.id, req.body);
+        return res.status(201).json({
+            success: true,
+            message: "Variant updated successfully!",
+            product
+        })
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+}

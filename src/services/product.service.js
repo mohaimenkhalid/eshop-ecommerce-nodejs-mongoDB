@@ -46,7 +46,6 @@ exports.update = async (id, body) => {
         if(!product) {
             throw createError("Product not found", 404);
         }
-        console.log(product)
         if (product.variants.length === 0 && product.status === 'INACTIVE' && status === 'ACTIVE') {
             throw createError(
                 "Cannot activate this product without at least one variant.",
@@ -81,5 +80,20 @@ exports.update = async (id, body) => {
         return productRepository.update(id, payload)
     } catch (e) {
         throw e;
+    }
+}
+
+
+exports.addVariant = async (id, variantId, body) => {
+    const {sku, color, size, price, stock} = body;
+    try {
+        const product = await productRepository.getProductById(id);
+        if(!product) {
+            throw createError("Product not found", 404);
+        }
+
+
+    } catch (e) {
+        throw e
     }
 }

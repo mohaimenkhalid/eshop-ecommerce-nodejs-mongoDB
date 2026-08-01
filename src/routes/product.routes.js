@@ -8,6 +8,15 @@ const {createProductSchema, updateProductSchema} = require('../validations/produ
 
 router.post('/create', validateRequest(createProductSchema), productController.create)
 router.patch('/:id', validateRequest(updateProductSchema), productController.update)
-
+router.post('/:id/variants', productController.addVariant)
 
 module.exports = router;
+
+
+
+// POST   /products/:id/variants
+// PATCH  /variants/:variantId
+// DELETE /variants/:variantId
+
+// POST   /variants/:variantId/images
+// DELETE /variants/:variantId/images/:imageId
