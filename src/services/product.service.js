@@ -84,14 +84,21 @@ exports.update = async (id, body) => {
 }
 
 
-exports.addVariant = async (id, variantId, body) => {
+exports.addVariant = async (id, body) => {
     const {sku, color, size, price, stock} = body;
     try {
         const product = await productRepository.getProductById(id);
         if(!product) {
             throw createError("Product not found", 404);
         }
-
+        const payload = {
+            sku,
+            color,
+            size,
+            price,
+            stock
+        }
+        return await productRepository.addVariant(id, payload)
 
     } catch (e) {
         throw e

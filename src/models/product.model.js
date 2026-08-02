@@ -13,11 +13,13 @@ const variantSchema = new mongoose.Schema(
         color: {
             type: String,
             trim: true,
+            default: null
         },
 
         size: {
             type: String,
             trim: true,
+            default: null
         },
 
         price: {

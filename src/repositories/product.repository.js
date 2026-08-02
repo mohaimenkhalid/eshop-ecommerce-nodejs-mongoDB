@@ -16,3 +16,16 @@ exports.update = async (id, payload) => {
 exports.getProductById = (id) => {
     return  Product.findById(id).lean();
 }
+
+exports.addVariant = (id, payload) => {
+    return Product.findByIdAndUpdate(id, {
+        $push: {
+            variants: payload,
+        },
+    },
+    {
+        returnDocument: 'after',
+        runValidators: true
+    }
+        )
+}
