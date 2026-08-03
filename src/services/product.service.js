@@ -108,3 +108,33 @@ exports.addVariant = async (id, body) => {
         throw e
     }
 }
+
+exports.updateVariantById = async (variantId, body) => {
+    const {sku, color, size, price, stock} = body;
+    try {
+        const payload = {
+            sku,
+            color,
+            size,
+            price,
+            stock
+        }
+        if(sku) {
+            const variant = await productRepository.findVariantBySku(sku.toUpperCase());
+
+            if (variant && !variant._id.equals(variantId)) {
+                throw createError("SKU must be unique", 400);
+            }
+
+        }
+        const product = productRepository.updateVariantById(variantId, payload)
+
+        if (!product) {
+            throw createError("Variant not found", 404);
+        }
+
+        return product;
+    } catch (e) {
+        throw e
+    }
+}
