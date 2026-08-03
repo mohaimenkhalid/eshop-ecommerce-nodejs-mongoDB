@@ -91,6 +91,10 @@ exports.addVariant = async (id, body) => {
         if(!product) {
             throw createError("Product not found", 404);
         }
+        const findSku = await product.variants.find(v => v.sku === sku.toUpperCase())
+        if (findSku) {
+            throw createError("SKU must be unique", 400);
+        }
         const payload = {
             sku,
             color,
