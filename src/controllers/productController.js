@@ -55,3 +55,17 @@ exports.updateVariantById = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.deleteVariant = async (req, res, next) => {
+    try {
+        const variant = await productService.deleteVariant(req.params.variantId)
+        return res.status(201).json({
+            success: true,
+            message: "Variant deleted successfully!",
+            variant
+        })
+    } catch (e) {
+        next(e)
+    }
+}
+

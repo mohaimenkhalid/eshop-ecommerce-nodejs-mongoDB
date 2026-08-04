@@ -81,3 +81,22 @@ exports.findVariantBySku = async (sku) => {
 
     return product.variants.id(product.variants[0]._id);
 };
+
+
+exports.deleteVariant = async (variantId) => {
+    return await Product.findOneAndUpdate(
+        {
+            "variants._id": variantId,
+        },
+        {
+            $pull: {
+                variants: {
+                    _id: variantId,
+                },
+            },
+        },
+        {
+            returnDocument: "after",
+        }
+    );
+};

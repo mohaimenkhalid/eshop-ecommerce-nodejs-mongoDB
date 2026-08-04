@@ -10,6 +10,7 @@ router.post('/create', validateRequest(createProductSchema), productController.c
 router.patch('/:id', validateRequest(updateProductSchema), productController.update)
 router.post('/:id/variants', productController.addVariant)
 router.patch('/variants/:variantId', productController.updateVariantById)
+router.delete('/variants/:variantId', productController.deleteVariant)
 
 module.exports = router;
 

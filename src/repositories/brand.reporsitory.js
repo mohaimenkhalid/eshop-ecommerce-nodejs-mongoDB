@@ -36,7 +36,7 @@ exports.getBrandById = (id) => {
 };
 
 exports.softDeleteById = (id) => {
-    return Brand.findByIdAndUpdate(id, {
+    return Brand.deleteOne(id, {
         isDeleted: true
     }, {
         returnDocument: 'after',

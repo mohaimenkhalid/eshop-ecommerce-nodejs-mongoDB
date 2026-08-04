@@ -138,3 +138,16 @@ exports.updateVariantById = async (variantId, body) => {
         throw e
     }
 }
+
+exports.deleteVariant = async (variantId) => {
+    try {
+        const product = await productRepository.deleteVariant(variantId);
+        if (!product) {
+            throw createError("Variant not found", 404);
+        }
+
+        return product;
+    } catch (e) {
+        throw e;
+    }
+}
