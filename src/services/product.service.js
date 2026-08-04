@@ -127,8 +127,8 @@ exports.updateVariantById = async (variantId, body) => {
             }
 
         }
-        const product = productRepository.updateVariantById(variantId, payload)
-
+        const product = await productRepository.updateVariantById(variantId, payload)
+        console.log("product", product)
         if (!product) {
             throw createError("Variant not found", 404);
         }
