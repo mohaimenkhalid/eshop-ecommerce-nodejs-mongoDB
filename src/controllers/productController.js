@@ -79,6 +79,20 @@ exports.addVariantImages = async (req, res, next) => {
             variant,
         });
     } catch (e) {
+
+        next(e)
+    }
+}
+
+exports.deleteVariantImage = async (req, res, next) => {
+    try {
+        const variant = await productService.deleteVariantImage(req.params.variantId, req.body.imageUrl);
+        return res.status(200).json({
+            success: true,
+            message: 'Image deleted successfully!',
+            variant,
+        });
+    } catch (e) {
         next(e)
     }
 }

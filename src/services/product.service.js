@@ -174,3 +174,24 @@ exports.addVariantImages = async (variantId, files) => {
         throw e;
     }
 }
+
+exports.deleteVariantImage = async (variantId, imageUrl) => {
+    try {
+        const existing = await productRepository.findVariantById(variantId);
+        if (!existing) {
+            throw createError('Variant not found', 404);
+        }
+
+        if (!existing.images.includes(imageUrl)) {
+            throw createError('Image not found on this variant', 404);
+        }
+
+        const variant = await productRepository.deleteVariantImage(variantId, imageUrl);
+
+        await uploadService.deleteFile(imageUrl.replace(/^\/uploads/, 'src/uploads'));
+
+        return variant;
+    } catch (e) {
+        throw e;
+    }
+}

@@ -129,3 +129,19 @@ exports.addVariantImages = async (variantId, imageUrls) => {
 
     return product?.variants.id(variantId);
 };
+
+exports.deleteVariantImage = async (variantId, imageUrl) => {
+    const product = await Product.findOneAndUpdate(
+        { 'variants._id': variantId },
+        {
+            $pull: {
+                'variants.$.images': imageUrl,
+            },
+        },
+        {
+            returnDocument: 'after',
+        }
+    );
+
+    return product?.variants.id(variantId);
+};

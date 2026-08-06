@@ -20,8 +20,7 @@ router.post(
     productController.addVariantImages
 )
 
+router.delete('/variants/:variantId/image', productController.deleteVariantImage)
+
 
 module.exports = router;
-
-// POST   /variants/:variantId/images
-// DELETE /variants/:variantId/images/:imageId
