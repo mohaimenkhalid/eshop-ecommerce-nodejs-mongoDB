@@ -2,7 +2,8 @@ const productRepository = require('../repositories/product.repository')
 const generateSlug = require("../utils/slugify");
 const categoryRepository = require('../repositories/category.repository')
 const brandRepository = require('../repositories/brand.reporsitory')
-const  createError = require('../utils/createError')
+const createError = require('../utils/createError')
+const uploadService = require('./upload.service')
 
 
 exports.create = async (body) => {
@@ -143,10 +144,32 @@ exports.deleteVariant = async (variantId) => {
     try {
         const product = await productRepository.deleteVariant(variantId);
         if (!product) {
-            throw createError("Variant not found", 404);
+            throw createError('Variant not found', 404);
         }
 
         return product;
+    } catch (e) {
+        throw e;
+    }
+}
+
+exports.addVariantImages = async (variantId, files) => {
+    try {
+        if (!files || files.length === 0) {
+            throw createError('At least one image is required.', 400);
+        }
+
+        // Verify the variant exists
+        const existing = await productRepository.findVariantById(variantId);
+        if (!existing) {
+            throw createError('Variant not found', 404);
+        }
+
+        // Upload all files (works for both single and multiple)
+        const uploadedFiles = await uploadService.uploadMultiple(files, 'variants');
+        const imageUrls = uploadedFiles.map((f) => f.url);
+
+        return await productRepository.addVariantImages(variantId, imageUrls);
     } catch (e) {
         throw e;
     }

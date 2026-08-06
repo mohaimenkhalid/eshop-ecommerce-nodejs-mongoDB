@@ -82,6 +82,16 @@ exports.findVariantBySku = async (sku) => {
     return product.variants.id(product.variants[0]._id);
 };
 
+exports.findVariantById = async (variantId) => {
+    const product = await Product.findOne(
+        { 'variants._id': variantId },
+        { 'variants.$': 1 }
+    );
+
+    if (!product) return null;
+    return product.variants.id(variantId);
+};
+
 
 exports.deleteVariant = async (variantId) => {
     return await Product.findOneAndUpdate(
@@ -99,4 +109,23 @@ exports.deleteVariant = async (variantId) => {
             returnDocument: "after",
         }
     );
+};
+
+exports.addVariantImages = async (variantId, imageUrls) => {
+    const product = await Product.findOneAndUpdate(
+        { 'variants._id': variantId },
+        {
+            $push: {
+                'variants.$.images': {
+                    $each: imageUrls,
+                },
+            },
+        },
+        {
+            returnDocument: 'after',
+            runValidators: true,
+        }
+    );
+
+    return product?.variants.id(variantId);
 };

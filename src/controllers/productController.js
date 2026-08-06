@@ -46,7 +46,7 @@ exports.addVariant = async (req, res, next) => {
 exports.updateVariantById = async (req, res, next) => {
     try {
         const variant = await productService.updateVariantById(req.params.variantId, req.body)
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
             message: "Variant updated successfully!",
             variant
@@ -59,11 +59,25 @@ exports.updateVariantById = async (req, res, next) => {
 exports.deleteVariant = async (req, res, next) => {
     try {
         const variant = await productService.deleteVariant(req.params.variantId)
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
             message: "Variant deleted successfully!",
             variant
         })
+    } catch (e) {
+        next(e)
+    }
+}
+
+
+exports.addVariantImages = async (req, res, next) => {
+    try {
+        const variant = await productService.addVariantImages(req.params.variantId, req.files);
+        return res.status(200).json({
+            success: true,
+            message: 'Images added successfully!',
+            variant,
+        });
     } catch (e) {
         next(e)
     }
