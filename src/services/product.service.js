@@ -5,6 +5,52 @@ const brandRepository = require('../repositories/brand.reporsitory')
 const createError = require('../utils/createError')
 const uploadService = require('./upload.service')
 
+exports.getPaginateProducts = async ({page, limit, name, category, brand}) => {
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.min(
+        Math.max(Number(limit) || 10, 1),
+        100
+    );
+    const skip = (pageNumber - 1) * limitNumber;
+    const filter = {
+        isDeleted: false,
+        status: 'ACTIVE',
+    };
+
+    if (name) {
+        filter.name = {
+            $regex: name,
+            $options: "i",
+        };
+    }
+
+    if (category) {
+        filter.category = category
+    }
+
+    if (brand) {
+        filter.brand = brand
+    }
+
+
+    const [products, total] = await Promise.all([
+        productRepository.getPaginateProducts({skip, limit: limitNumber, filter }),
+        productRepository.getTotalProductCount(filter),
+    ]);
+    const totalPages = Math.ceil(total / limitNumber);
+    return {
+        data: products,
+        pagination: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+            totalPages,
+            hasPrev: pageNumber > 1,
+            hasNext: pageNumber < totalPages,
+        }
+    }
+}
+
 
 exports.create = async (body) => {
     const {name, description, category, brand, isFeatured} = body;

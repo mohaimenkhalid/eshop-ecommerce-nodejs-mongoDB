@@ -1,5 +1,18 @@
 const Product = require('../models/product.model')
 
+exports.getPaginateProducts = ({skip, limit, filter}) => {
+    return Product.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .select('-__v')
+        .sort({ createdAt: -1 })
+        .lean();
+}
+
+
+exports.getTotalProductCount = async (filter) => {
+    return Product.countDocuments(filter);
+}
 
 exports.create = async (payload) => {
     const product = new Product(payload)

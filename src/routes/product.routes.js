@@ -7,6 +7,7 @@ const validateRequest = require('../middlewares/validateRequest.middleware')
 const {createProductSchema, updateProductSchema} = require('../validations/product.validation')
 
 //product
+router.get('/', productController.getPaginateProducts)
 router.post('/create', validateRequest(createProductSchema), productController.create)
 router.patch('/:id', validateRequest(updateProductSchema), productController.update)
 

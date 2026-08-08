@@ -1,4 +1,19 @@
 const productService = require('../services/product.service')
+const brandService = require("../services/brand.service");
+
+exports.getPaginateProducts = async (req, res, next) => {
+    try {
+        const response = await productService.getPaginateProducts(req.query);
+        return res.status(200).json({
+            success: true,
+            ...response
+        })
+    } catch (e) {
+        console.log(e)
+        next(e)
+    }
+}
+
 
 exports.create = async (req, res, next) => {
     try {
