@@ -149,7 +149,11 @@ exports.addVariant = async (id, body) => {
             price,
             stock
         }
-        return await productRepository.addVariant(id, payload)
+
+        const isFirstVariant = !product.variants || product.variants.length === 0;
+        const updateStatus = isFirstVariant ? "ACTIVE" : null;
+
+        return await productRepository.addVariant(id, payload, updateStatus)
 
     } catch (e) {
         throw e

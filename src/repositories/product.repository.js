@@ -30,17 +30,23 @@ exports.getProductById = (id) => {
     return  Product.findById(id).lean();
 }
 
-exports.addVariant = (id, payload) => {
-    return Product.findByIdAndUpdate(id, {
+exports.addVariant = (id, payload, updateStatus = null) => {
+    const updateObj = {
         $push: {
             variants: payload,
         },
-    },
-    {
+    };
+
+    if (updateStatus) {
+        updateObj.$set = {
+            status: updateStatus
+        };
+    }
+
+    return Product.findByIdAndUpdate(id, updateObj, {
         returnDocument: 'after',
         runValidators: true
-    }
-        )
+    });
 }
 
 exports.updateVariantById = async (variantId, payload) => {
