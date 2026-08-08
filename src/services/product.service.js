@@ -192,9 +192,28 @@ exports.updateVariantById = async (variantId, body) => {
 
 exports.deleteVariant = async (variantId) => {
     try {
-        const product = await productRepository.deleteVariant(variantId);
-        if (!product) {
+        const variant = await productRepository.findVariantById(variantId);
+        if (!variant) {
             throw createError('Variant not found', 404);
+        }
+
+        const imagesToDelete = variant.images || [];
+
+        let product = await productRepository.deleteVariant(variantId);
+
+        // Unlink all images associated with the deleted variant
+        if (imagesToDelete.length > 0) {
+            for (const imageUrl of imagesToDelete) {
+                try {
+                    await uploadService.deleteFile(imageUrl.replace(/^\/uploads/, 'src/uploads'));
+                } catch (err) {
+                    console.error(`Failed to delete image: ${imageUrl}`, err);
+                }
+            }
+        }
+
+        if (product.variants.length === 0 && product.status === 'ACTIVE') {
+            product = await productRepository.update(product._id, { status: 'INACTIVE' });
         }
 
         return product;
