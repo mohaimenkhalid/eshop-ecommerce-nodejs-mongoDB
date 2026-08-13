@@ -1,6 +1,6 @@
 # Ecommerce Express MongoJS Starter
 
-A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes a **Todo API** as a reference example for how to build future layered APIs (Controller-Service-Repository pattern).
+A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes **Brand**, **Category**, and **Product (with Variants & Images)** APIs built on the Controller-Service-Repository pattern.
 
 ## 🏗️ Project Architecture & Design Pattern
 
@@ -78,3 +78,52 @@ Ensure you have the following installed on your local machine:
      ```bash
      npm start
      ```
+
+---
+
+## 📡 API Endpoints
+
+### Auth
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/signup` | Register a new user |
+| POST | `/api/auth/signin` | Login and receive a JWT |
+
+### Users
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/users` | Get all users |
+
+### Brands
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/brands` | Get paginated brands |
+| GET | `/api/brands/all` | Get all brands |
+| POST | `/api/brands/create` | Create a brand (with image upload) |
+| PATCH | `/api/brands/:id` | Update a brand (with image upload) |
+| DELETE | `/api/brands/:id` | Delete a brand |
+
+### Categories
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/categories` | Get paginated categories |
+| GET | `/api/categories/all` | Get all categories |
+| POST | `/api/categories/create` | Create a category (with image upload) |
+| PATCH | `/api/categories/:id` | Update a category (with image upload) |
+| DELETE | `/api/categories/:id` | Delete a category |
+
+### Products
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/products` | Get paginated products |
+| POST | `/api/products/create` | Create a product |
+| PATCH | `/api/products/:id` | Update a product |
+
+### Product Variants
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/products/:id/variants` | Add a variant to a product |
+| PATCH | `/api/products/variants/:variantId` | Update a variant |
+| DELETE | `/api/products/variants/:variantId` | Delete a variant (also removes its images) |
+| POST | `/api/products/variants/:variantId/images` | Upload images (up to 10) for a variant |
+| DELETE | `/api/products/variants/:variantId/image` | Delete a single variant image |
