@@ -1,4 +1,21 @@
 const cartService = require("../services/cart.service");
+
+exports.getAllCart = async (req, res, next) => {
+    try {
+        const carts = await cartService.getAllCarts(req.user.userId);
+        return res.status(200).json({
+            success: true,
+            data: {
+                carts: carts,
+                total: carts.length
+            },
+            message: 'Successfully retrieved cart'
+        });
+    } catch (e) {
+        next(e)
+    }
+}
+
 exports.addToCart = async (req, res, next) => {
     try {
         const cart = await cartService.addToCart(req.user, req.body);

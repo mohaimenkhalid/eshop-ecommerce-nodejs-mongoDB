@@ -5,6 +5,7 @@ const authGuard = require('../middlewares/authGuard.middleware')
 const validateRequest = require('../middlewares/validateRequest.middleware')
 const { addToCartSchema } = require('../validations/cart.validation')
 
+router.get('/', authGuard, cartController.getAllCart)
 router.post('/', authGuard, validateRequest(addToCartSchema), cartController.addToCart)
 router.patch('/:cartId', authGuard, cartController.cartQuantityUpdate)
 

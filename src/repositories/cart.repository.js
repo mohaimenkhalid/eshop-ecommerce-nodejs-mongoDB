@@ -1,5 +1,11 @@
 const Cart = require('../models/cart.model')
 
+exports.getAllCarts = (userId) => {
+    return Cart.find({
+        user: userId
+    }).lean();
+}
+
 exports.addToCart = async (payload) => {
     const cart = await new Cart(payload)
     return await cart.save();

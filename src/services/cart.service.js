@@ -1,6 +1,16 @@
 const cartRepository = require('../repositories/cart.repository');
 const productRepository = require('../repositories/product.repository');
 const createError = require('../utils/createError');
+
+exports.getAllCarts = async (userId) => {
+    try {
+        return await cartRepository.getAllCarts(userId);
+    } catch (e) {
+        throw e;
+    }
+}
+
+
 exports.addToCart = async (user, body) => {
     try {
         const product = await productRepository.getProductById(body.product);
