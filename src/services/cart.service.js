@@ -14,7 +14,7 @@ exports.addToCart = async (user, body) => {
         const cart = await cartRepository.getCartByVariantId(user.userId, body.variantId)
         if (cart) {
             //update quantity +1
-            return await cartRepository.updateCartQuantity(cart._id);
+            return await cartRepository.incrementCartQuantity(user.userId, cart._id);
         }
         //new insert
         const payload = {
@@ -24,6 +24,25 @@ exports.addToCart = async (user, body) => {
             quantity: body.quantity,
         }
         return await cartRepository.addToCart(payload)
+    } catch (e) {
+        throw e;
+    }
+}
+
+exports.cartQuantityUpdate = async (user, req) => {
+    const {body, params} = req;
+    if (!body.quantity) {
+        throw createError('Quantity not found', 400);
+    }
+
+    if (body.quantity === 0) {
+        //Drop product
+        console.log('Drop product from cart');
+        return;
+    }
+
+    try {
+       return await cartRepository.updateCartQuantity(user.userId, params.cartId, body.quantity)
     } catch (e) {
         throw e;
     }

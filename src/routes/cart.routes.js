@@ -6,5 +6,6 @@ const validateRequest = require('../middlewares/validateRequest.middleware')
 const { addToCartSchema } = require('../validations/cart.validation')
 
 router.post('/', authGuard, validateRequest(addToCartSchema), cartController.addToCart)
+router.patch('/:cartId', authGuard, cartController.cartQuantityUpdate)
 
 module.exports = router;

@@ -11,3 +11,16 @@ exports.addToCart = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.cartQuantityUpdate = async (req, res, next) => {
+    try {
+        const cart = await cartService.cartQuantityUpdate(req.user, req);
+        return res.status(200).json({
+            success: true,
+            cart,
+            message: 'Cart updated successfully'
+        })
+    } catch (e) {
+        next(e)
+    }
+}
