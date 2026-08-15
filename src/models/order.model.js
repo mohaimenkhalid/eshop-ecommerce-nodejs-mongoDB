@@ -1,4 +1,7 @@
-import { Schema, Types } from "mongoose";
+const mongoose = require('mongoose')
+const {number} = require("joi");
+
+const { Schema, Types } = mongoose;
 
 const orderItemSchema = new Schema(
     {
@@ -13,7 +16,14 @@ const orderItemSchema = new Schema(
             required: true,
         },
 
+        // Snapshot data
         productName: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        variantName: {
             type: String,
             required: true,
             trim: true,
@@ -101,7 +111,7 @@ const orderSchema = new Schema(
 
         paymentMethod: {
             type: String,
-            enum: ["COD", "BKASH", "NAGAD", "CARD"],
+            enum: ["COD", "BKASH", "NAGAD", "CARD", "STRIPE"],
             required: true,
         },
 

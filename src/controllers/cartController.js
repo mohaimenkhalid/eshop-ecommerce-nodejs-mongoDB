@@ -41,3 +41,16 @@ exports.cartQuantityUpdate = async (req, res, next) => {
         next(e)
     }
 }
+
+exports.cartItemDelete = async (req, res, next) => {
+    try {
+        await cartService.cartItemDelete(req.user, req.params.cartId)
+        return res.status(200).json({
+            success: true,
+            cart,
+            message: 'Cart deleted successfully'
+        })
+    } catch (e) {
+        next(e)
+    }
+}

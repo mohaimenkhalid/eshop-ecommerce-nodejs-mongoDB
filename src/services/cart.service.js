@@ -57,3 +57,16 @@ exports.cartQuantityUpdate = async (user, req) => {
         throw e;
     }
 }
+
+exports.cartItemDelete = async (user, cartId) => {
+    try {
+        const deletedItem = await cartRepository.cartItemDelete(user.userId, cartId)
+
+        if(!deletedItem) {
+            throw createError('Cart item not found', 400)
+        }
+        return deletedItem;
+    } catch (e) {
+        throw e;
+    }
+}

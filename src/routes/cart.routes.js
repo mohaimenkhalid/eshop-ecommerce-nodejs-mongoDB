@@ -8,5 +8,6 @@ const { addToCartSchema } = require('../validations/cart.validation')
 router.get('/', authGuard, cartController.getAllCart)
 router.post('/', authGuard, validateRequest(addToCartSchema), cartController.addToCart)
 router.patch('/:cartId', authGuard, cartController.cartQuantityUpdate)
+router.delete('/:cartId', authGuard, cartController.cartItemDelete)
 
 module.exports = router;

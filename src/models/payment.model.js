@@ -33,6 +33,12 @@ const paymentSchema = new Schema(
             required: true,
         },
 
+        gatewayCharge: {
+            type: Number,
+            min: 0,
+            default: 0
+        },
+
         paymentStatus: {
             type: String,
             enum: [

@@ -45,3 +45,10 @@ exports.updateCartQuantity = async (userId, cartId, quantity) => {
         new: true
     })
 }
+
+exports.cartItemDelete = async (userId, cartId) => {
+    return await Cart.findOneAndDelete({
+        _id: cartId,
+        user: userId
+    })
+}
