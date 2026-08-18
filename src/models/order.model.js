@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const {number} = require("joi");
 
 const { Schema, Types } = mongoose;
 
@@ -168,3 +167,5 @@ orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ status: 1 });
 
 orderSchema.index({ user: 1, createdAt: -1 });
+
+module.exports = mongoose.model("Order", orderSchema);

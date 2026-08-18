@@ -1,4 +1,5 @@
-import { Schema, Types } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema, Types } = mongoose;
 
 const paymentSchema = new Schema(
     {
@@ -89,3 +90,5 @@ paymentSchema.index(
 paymentSchema.index({
     paymentStatus: 1,
 });
+
+module.exports = mongoose.model("Payment", paymentSchema);
