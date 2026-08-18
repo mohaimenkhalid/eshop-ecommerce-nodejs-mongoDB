@@ -53,6 +53,6 @@ exports.cartItemDelete = async (userId, cartId) => {
     })
 }
 
-exports.clearCartByUserId = async (userId) => {
-    return await Cart.deleteMany({ user: userId });
+exports.clearCartByUserId = async (userId, options = {}) => {
+    return await Cart.deleteMany({ user: userId }, options);
 }

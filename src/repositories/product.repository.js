@@ -19,10 +19,11 @@ exports.create = async (payload) => {
     return await product.save();
 }
 
-exports.update = async (id, payload) => {
+exports.update = async (id, payload, options = {}) => {
     return await Product.findByIdAndUpdate(id, payload, {
         returnDocument: 'after',
-        runValidators: true
+        runValidators: true,
+        ...options
     })
 }
 
