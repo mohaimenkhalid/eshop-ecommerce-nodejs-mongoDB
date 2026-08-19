@@ -31,6 +31,12 @@ exports.getProductById = (id) => {
     return  Product.findById(id).lean();
 }
 
+exports.getProductsWithIds = async (productIds) => {
+    return await Product.find({
+        _id: { $in: productIds }
+    });
+}
+
 exports.addVariant = (id, payload, updateStatus = null) => {
     const updateObj = {
         $push: {
@@ -50,7 +56,7 @@ exports.addVariant = (id, payload, updateStatus = null) => {
     });
 }
 
-exports.updateVariantById = async (variantId, payload) => {
+exports.updateVariantById = async (variantId, payload, options = {}) => {
     const updateFields = {};
 
     Object.entries(payload).forEach(([key, value]) => {
@@ -60,7 +66,7 @@ exports.updateVariantById = async (variantId, payload) => {
     });
 
     // $set: {
-    //     "variants.$.sku": payload.sku,
+    //         "variants.$.sku": payload.sku,
     //         "variants.$.color": payload.color,
     //         "variants.$.size": payload.size,
     //         "variants.$.price": payload.price,
@@ -78,6 +84,7 @@ exports.updateVariantById = async (variantId, payload) => {
         {
             returnDocument: "after",
             runValidators: true,
+            ...options
         }
     );
 

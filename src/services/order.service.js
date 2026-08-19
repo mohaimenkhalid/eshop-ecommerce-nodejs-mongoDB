@@ -29,8 +29,16 @@ exports.createOrder = async (userId, body) => {
             throw createError("Your cart is empty. Add products to cart first.", 400);
         }
 
+        //fetch all cart data
+
+        const productIds = [...new Set(cartItems.map(item => item.product.toString()))];
+
+        const products = await productRepository.getProductsWithIds(productIds)
+        //console.log(products)
+        //return products;
         for (const item of cartItems) {
-            const product = await productRepository.getProductById(item.product);
+            const product = products.find(product => product._id.toString() === item.product.toString());
+            console.log(product);
             if (!product) {
                 throw createError(`Product not found for a cart item`, 404);
             }
@@ -52,11 +60,13 @@ exports.createOrder = async (userId, body) => {
                 );
             }
 
+            //generate variant name with size & color
             let variantNameParts = [];
             if (variant.color) variantNameParts.push(variant.color);
             if (variant.size) variantNameParts.push(variant.size);
             const variantName = variantNameParts.length > 0 ? variantNameParts.join(" / ") : "Standard";
 
+            //order item
             orderItems.push({
                 productId: product._id,
                 variantId: variant._id,
@@ -69,19 +79,15 @@ exports.createOrder = async (userId, body) => {
                 totalPrice: variant.price * item.quantity,
             });
 
-            // Decrement variant stock
-            variant.stock -= item.quantity;
             // Pass the session to the repository update method
-            await productRepository.update(product._id, { variants: product.variants }, { session });
+            await productRepository.updateVariantById(variant._id, { stock: variant.stock - item.quantity }, { session });
         }
 
-        // 2. Calculations
         const subtotal = orderItems.reduce((acc, item) => acc + item.totalPrice, 0);
         const discount = body.discount || 0;
         const deliveryCharge = body.deliveryCharge || 0;
         const total = Math.max(0, subtotal - discount + deliveryCharge);
 
-        // 3. Document identification numbers
         // We do not pass session here so sequence generation doesn't block other transactions
         const orderSeq = await getNextSequence("order_sequence");
         const paymentSeq = await getNextSequence("payment_sequence");
@@ -89,7 +95,7 @@ exports.createOrder = async (userId, body) => {
         const orderNumber = `ORD-${String(orderSeq).padStart(5, "0")}`;
         const paymentNumber = `PAY-${String(paymentSeq).padStart(5, "0")}`;
 
-        // 4. Create Order
+        // Create Order
         const orderPayload = {
             user: userId,
             orderNumber,
@@ -106,7 +112,7 @@ exports.createOrder = async (userId, body) => {
         // Pass session to repository
         const order = await orderRepository.createOrder(orderPayload, { session });
 
-        // 5. Create Payment
+        // Create Payment
         const paymentPayload = {
             paymentNumber,
             order: order._id,
@@ -115,20 +121,19 @@ exports.createOrder = async (userId, body) => {
             paymentMethod: body.paymentMethod,
             paymentStatus: "PENDING",
         };
-        // Pass session to repository
+
         const payment = await paymentRepository.createPayment(paymentPayload, { session });
 
-        // 6. Clear cart since checkout was successful
-        // Pass session to repository
+        // Clear cart since checkout was successful
         await cartRepository.clearCartByUserId(userId, { session });
 
-        // 7. Commit Transaction (Everything succeeded!)
+        // ommit Transaction (Everything succeeded!)
         await session.commitTransaction();
         session.endSession();
 
         return { order, payment };
     } catch (error) {
-        // 8. Rollback Transaction (Something failed!)
+        // Rollback Transaction (Something failed!)
         await session.abortTransaction();
         session.endSession();
         throw error;
