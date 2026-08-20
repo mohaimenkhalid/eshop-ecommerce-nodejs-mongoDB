@@ -12,6 +12,7 @@ router.post(
     orderController.createOrder
 );
 
-router.get('/', orderController.getAllOrderListPaginate)
+router.get('/', authGuard, orderController.getAllOrderListPaginate)
+router.get('/me', authGuard, orderController.getMyOrderListPaginate)
 
 module.exports = router;

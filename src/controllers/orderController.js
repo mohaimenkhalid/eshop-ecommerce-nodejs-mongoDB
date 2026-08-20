@@ -21,11 +21,29 @@ exports.createOrder = async (req, res, next) => {
 };
 
 exports.getAllOrderListPaginate = async (req, res, next) => {
-    const {page, limit, orderNumber, paymentStatus, status} = req.query;
-    const payload = {page, limit, orderNumber, paymentStatus, status};
-    const orders = await orderService.getPaginateOrders(payload);
-    return res.status(200).json({
-        success: true,
-        ...orders
-    })
+    try {
+        const {page, limit, orderNumber, paymentStatus, status} = req.query;
+        const payload = {page, limit, orderNumber, paymentStatus, status};
+        const orders = await orderService.getPaginateOrders(payload);
+        return res.status(200).json({
+            success: true,
+            ...orders
+        })
+    } catch (e) {
+        next(e)
+    }
+}
+
+exports.getMyOrderListPaginate = async (req, res, next) => {
+    try {
+        const {page, limit, orderNumber, paymentStatus, status} = req.query;
+        const payload = {page, limit, orderNumber, paymentStatus, status};
+        const orders = await orderService.getMyPaginateOrders(req.user.userId, payload);
+        return res.status(200).json({
+            success: true,
+            ...orders
+        })
+    } catch (e) {
+        next(e)
+    }
 }
