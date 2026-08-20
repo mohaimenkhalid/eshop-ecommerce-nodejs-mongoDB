@@ -2,7 +2,7 @@ const categoryRepository = require('../repositories/category.repository');
 const generateSlug = require('../utils/slugify');
 const uploadService = require('../services/upload.service');
 const createError = require('../utils/createError');
-
+const { redisClient } = require("../config/redis");
 exports.getPaginateCategories = async ({page, limit, name, status, parentCategory}) => {
     const pageNumber = Math.max(Number(page) || 1, 1);
     const limitNumber = Math.min(
@@ -48,7 +48,13 @@ exports.getPaginateCategories = async ({page, limit, name, status, parentCategor
 }
 
 exports.getAllCategories = async () => {
-    return await categoryRepository.getAllCategories();
+    const cached = await redisClient.get('categories')
+    if (cached) {
+        return JSON.parse(cached);
+    }
+    const newaCategories = await categoryRepository.getAllCategories();
+    await redisClient.set('categories', JSON.stringify(newaCategories));
+    return newaCategories;
 }
 
 exports.create = async (req) => {
@@ -76,6 +82,7 @@ exports.create = async (req) => {
             status,
         }
         await categoryRepository.createCategory(payload)
+        await redisClient.del('categories');
     } catch (e) {
         // if failed to insert data in database then upload file remove from here
         if (req.file) {
@@ -135,6 +142,8 @@ exports.update = async (id, body, file) => {
         if (updatedCategory && uploadedImage?.url && category.image) { //if category updated, new uploaded image url, prev category image if exist
             await uploadService.deleteFile(`src${category.image}`)
         }
+        await redisClient.del('categories');
+
         return updatedCategory;
 
     } catch (e) {
@@ -154,6 +163,7 @@ exports.delete = async (id) => {
         if (category.isDeleted) {
             throw createError("Category already deleted", 400);
         }
+        await redisClient.del('categories');
         return await categoryRepository.softDeleteById(id)
     } catch (e) {
         throw e;
