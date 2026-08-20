@@ -2,6 +2,8 @@ const Product = require('../models/product.model')
 
 exports.getPaginateProducts = ({skip, limit, filter}) => {
     return Product.find(filter)
+        .populate('category')
+        .populate('brand')
         .skip(skip)
         .limit(limit)
         .select('-__v')
