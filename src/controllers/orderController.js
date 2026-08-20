@@ -19,3 +19,13 @@ exports.createOrder = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getAllOrderListPaginate = async (req, res, next) => {
+    const {page, limit, orderNumber, paymentStatus, status} = req.query;
+    const payload = {page, limit, orderNumber, paymentStatus, status};
+    const orders = await orderService.getPaginateOrders(payload);
+    return res.status(200).json({
+        success: true,
+        ...orders
+    })
+}

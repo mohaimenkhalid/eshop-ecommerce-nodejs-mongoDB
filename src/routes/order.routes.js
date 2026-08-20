@@ -12,4 +12,6 @@ router.post(
     orderController.createOrder
 );
 
+router.get('/', orderController.getAllOrderListPaginate)
+
 module.exports = router;

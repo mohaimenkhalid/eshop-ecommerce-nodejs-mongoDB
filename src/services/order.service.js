@@ -5,6 +5,47 @@ const productRepository = require("../repositories/product.repository");
 const cartRepository = require("../repositories/cart.repository");
 const createError = require("../utils/createError");
 const Counter = require("../models/counter.model");
+const brandRepository = require("../repositories/brand.reporsitory");
+
+exports.getPaginateOrders = async ({page, limit, orderNumber, paymentStatus, status}) => {
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.min(
+        Math.max(Number(limit) || 10, 1),
+        100
+    );
+    const skip = (pageNumber - 1) * limitNumber;
+    const filter = {};
+
+    if (orderNumber) {
+        filter.orderNumber = orderNumber;
+    }
+    if (paymentStatus) {
+        filter.paymentStatus = paymentStatus;
+    }
+
+    if (status) {
+        filter.status = status;
+    }
+
+    const [orders, total] = await Promise.all([
+        orderRepository.getPaginateOrders({skip, limit: limitNumber, filter }),
+        orderRepository.getTotalOrderCount(filter),
+    ]);
+    const totalPages = Math.ceil(total / limitNumber);
+
+    return {
+        data: orders,
+        pagination: {
+            page: pageNumber,
+            limit: limitNumber,
+            total,
+            totalPages,
+            hasPrev: pageNumber > 1,
+            hasNext: pageNumber < totalPages,
+        }
+    }
+}
+
 
 const getNextSequence = async (sequenceName) => {
     const counter = await Counter.findByIdAndUpdate(
