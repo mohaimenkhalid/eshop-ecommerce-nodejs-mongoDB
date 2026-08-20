@@ -75,12 +75,6 @@ paymentSchema.index(
     { unique: true }
 );
 
-// Payment number lookup
-paymentSchema.index(
-    { paymentNumber: 1 },
-    { unique: true }
-);
-
 // User payment history
 paymentSchema.index(
     { user: 1, createdAt: -1 }
