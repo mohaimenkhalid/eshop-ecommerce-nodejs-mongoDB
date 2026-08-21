@@ -16,6 +16,7 @@
     "bullmq": "^6.1.2",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
     "ioredis": "^6.0.0",
     "joi": "^18.2.3",
     "jsonwebtoken": "^9.0.3",
@@ -23,6 +24,7 @@
     "multer": "^2.2.0",
     "nodemailer": "^9.0.5",
     "puppeteer": "^25.8.0",
+    "rate-limit-redis": "^6.0.1",
     "redis": "^6.2.1",
     "slugify": "^1.6.9"
   },
