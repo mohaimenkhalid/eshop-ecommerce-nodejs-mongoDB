@@ -56,5 +56,7 @@ temp/
 *.sqlite3
 
 agent.md
+CLAUDE.md
+plan.md
 
 src/uploads
