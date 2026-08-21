@@ -6,6 +6,7 @@ const cartRepository = require("../repositories/cart.repository");
 const createError = require("../utils/createError");
 const Counter = require("../models/counter.model");
 const brandRepository = require("../repositories/brand.reporsitory");
+const { enqueueInvoiceEmail } = require("../queues/invoiceEmail.queue");
 
 exports.getPaginateOrders = async ({page, limit, orderNumber, paymentStatus, status}) => {
     const pageNumber = Math.max(Number(page) || 1, 1);
@@ -212,6 +213,12 @@ exports.createOrder = async (userId, body) => {
         // ommit Transaction (Everything succeeded!)
         await session.commitTransaction();
         session.endSession();
+
+        // COD has no separate payment-success step, so send the invoice right away.
+        // Other payment methods will enqueue this once a payment-success flow exists.
+        if (order.paymentMethod === "COD") {
+            await enqueueInvoiceEmail({ orderId: order._id });
+        }
 
         return { order, payment };
     } catch (error) {
