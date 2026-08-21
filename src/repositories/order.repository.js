@@ -19,7 +19,7 @@ exports.createOrder = async (payload, options = {}) => {
 };
 
 exports.getOrderById = (id) => {
-    return Order.findById(id).lean();
+    return Order.findById(id).populate('user', '-password').lean();
 };
 
 exports.getOrdersByUserId = (userId) => {

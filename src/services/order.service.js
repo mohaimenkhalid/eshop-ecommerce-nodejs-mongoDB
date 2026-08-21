@@ -7,6 +7,7 @@ const createError = require("../utils/createError");
 const Counter = require("../models/counter.model");
 const brandRepository = require("../repositories/brand.reporsitory");
 const { enqueueInvoiceEmail } = require("../queues/invoiceEmail.queue");
+const { enqueueOrderConfirmationEmail } = require("../queues/orderConfirmationEmail.queue");
 
 exports.getPaginateOrders = async ({page, limit, orderNumber, paymentStatus, status}) => {
     const pageNumber = Math.max(Number(page) || 1, 1);
@@ -214,10 +215,15 @@ exports.createOrder = async (userId, body) => {
         await session.commitTransaction();
         session.endSession();
 
-        // COD has no separate payment-success step, so send the invoice right away.
-        // Other payment methods will enqueue this once a payment-success flow exists.
-        if (order.paymentMethod === "COD") {
-            await enqueueInvoiceEmail({ orderId: order._id });
+        // Invoice email is intentionally NOT sent here.
+        // It will be enqueued later, when the order status is approved/confirmed:
+        //     await enqueueInvoiceEmail({ orderId: order._id });
+        // For now the customer only gets a simple "order placed" confirmation mail.
+        try {
+            await enqueueOrderConfirmationEmail({ orderId: order._id });
+        } catch (queueError) {
+            // Order is already committed, so a mail queue failure must not fail the request.
+            console.error("Failed to enqueue order confirmation email:", queueError.message);
         }
 
         return { order, payment };

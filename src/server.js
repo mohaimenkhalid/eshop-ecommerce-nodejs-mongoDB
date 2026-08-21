@@ -3,7 +3,7 @@ const { connectRedis } = require("./config/redis");
 
 const app = require('./index');
 const connectDB = require('./config/db');
-require('./workers/invoiceEmail.worker');
+require('./workers');
 
 const PORT = process.env.PORT || 3000;
 
