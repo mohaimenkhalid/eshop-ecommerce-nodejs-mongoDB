@@ -3,7 +3,6 @@ const bullmqRedis = require("../config/bullmq.redis");
 const { QUEUE_NAME } = require("../queues/invoiceEmail.queue");
 const orderRepository = require("../repositories/order.repository");
 const paymentRepository = require("../repositories/payment.repository");
-const userRepository = require("../repositories/user.repository");
 const pdfService = require("../services/pdf.service");
 const emailService = require("../services/email.service");
 const createError = require("../utils/createError");
@@ -16,21 +15,18 @@ const processInvoiceEmailJob = async (job) => {
         throw createError(`Order not found for id ${orderId}`, 404);
     }
 
-    const [payment, user] = await Promise.all([
-        paymentRepository.getPaymentByOrderId(orderId),
-        userRepository.getUserById(order.user),
-    ]);
+    const payment = await paymentRepository.getPaymentByOrderId(orderId)
 
-    if (!user?.email) {
+    if (!order.user?.email) {
         throw createError(`No email found for user of order ${order.orderNumber}`, 400);
     }
 
     const pdfBuffer = await pdfService.generateInvoicePdf(order, payment);
 
     await emailService.sendMail({
-        to: user.email,
-        subject: `Invoice for your order #${order.orderNumber}`,
-        html: `<p>Hi ${user.name},</p><p>Thank you for your order. Please find your invoice for order <strong>#${order.orderNumber}</strong> attached.</p>`,
+        to: order.user.email,
+        subject: `Your Order has been confirmed. Invoice for your order #${order.orderNumber}`,
+        html: `<p>Hi ${order.user.name},</p><p>Your order has been confirmed. Please find your invoice for order <strong>#${order.orderNumber}</strong> attached.</p>`,
         attachments: [
             {
                 filename: `invoice-${order.orderNumber}.pdf`,

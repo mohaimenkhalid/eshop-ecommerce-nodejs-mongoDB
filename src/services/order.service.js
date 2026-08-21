@@ -5,9 +5,7 @@ const productRepository = require("../repositories/product.repository");
 const cartRepository = require("../repositories/cart.repository");
 const createError = require("../utils/createError");
 const Counter = require("../models/counter.model");
-const brandRepository = require("../repositories/brand.reporsitory");
 const { enqueueInvoiceEmail } = require("../queues/invoiceEmail.queue");
-const { enqueueOrderConfirmationEmail } = require("../queues/orderConfirmationEmail.queue");
 
 exports.getPaginateOrders = async ({page, limit, orderNumber, paymentStatus, status}) => {
     const pageNumber = Math.max(Number(page) || 1, 1);
@@ -215,9 +213,6 @@ exports.createOrder = async (userId, body) => {
         await session.commitTransaction();
         session.endSession();
 
-        // Invoice email is intentionally NOT sent here.
-        // It will be enqueued later, when the order status is approved/confirmed:
-        //     await enqueueInvoiceEmail({ orderId: order._id });
         // For now the customer only gets a simple "order placed" confirmation mail.
         try {
             await enqueueOrderConfirmationEmail({ orderId: order._id });
@@ -234,3 +229,19 @@ exports.createOrder = async (userId, body) => {
         throw error;
     }
 };
+
+exports.updateOrder = async (orderId, body) => {
+    const {status} = body;
+
+    const order = await orderRepository.updateOrderById(orderId, {status})
+
+    if (order.status === 'CONFIRMED') {
+        try {
+            await enqueueInvoiceEmail({ orderId: order._id });
+        } catch (queueError) {
+            console.error("Failed to enqueue order confirmation email:", queueError.message);
+        }
+    }
+
+    return order;
+}

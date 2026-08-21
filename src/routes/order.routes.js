@@ -12,6 +12,8 @@ router.post(
     orderController.createOrder
 );
 
+router.patch('/:orderId', authGuard, orderController.updateOrder);
+
 router.get('/', authGuard, orderController.getAllOrderListPaginate)
 router.get('/me', authGuard, orderController.getMyOrderListPaginate)
 

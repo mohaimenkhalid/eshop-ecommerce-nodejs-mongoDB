@@ -2,7 +2,6 @@ const { Worker } = require("bullmq");
 const bullmqRedis = require("../config/bullmq.redis");
 const { QUEUE_NAME } = require("../queues/orderConfirmationEmail.queue");
 const orderRepository = require("../repositories/order.repository");
-const userRepository = require("../repositories/user.repository");
 const emailService = require("../services/email.service");
 const { renderOrderConfirmationHtml } = require("../templates/orderConfirmation.template");
 const createError = require("../utils/createError");
