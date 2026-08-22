@@ -4,8 +4,26 @@ const categoryRepository = require('../repositories/category.repository')
 const brandRepository = require('../repositories/brand.reporsitory')
 const createError = require('../utils/createError')
 const uploadService = require('./upload.service')
+const {redisClient} = require('../config/redis')
 
 exports.getPaginateProducts = async ({page, limit, name, category, brand}) => {
+    let version = await redisClient.get("products:version");
+    if (!version) {
+        version = await redisClient.set(
+            "products:version",
+            1,
+            { NX: true }
+        );
+
+        version = 1;
+    }
+
+    //Create Cache key
+    const key = `products:v${version}:page:${page}:limit:${limit}${name ? `:name:${name}` : ""}${category ? `:category:${category}` : ""}${brand ? `:brand:${brand}` : ""}`;
+    const cached = await redisClient.get(key);
+    if (cached) {
+        return JSON.parse(cached);
+    }
     const pageNumber = Math.max(Number(page) || 1, 1);
     const limitNumber = Math.min(
         Math.max(Number(limit) || 10, 1),
@@ -38,7 +56,7 @@ exports.getPaginateProducts = async ({page, limit, name, category, brand}) => {
         productRepository.getTotalProductCount(filter),
     ]);
     const totalPages = Math.ceil(total / limitNumber);
-    return {
+    const finalRes = {
         data: products,
         pagination: {
             page: pageNumber,
@@ -49,6 +67,17 @@ exports.getPaginateProducts = async ({page, limit, name, category, brand}) => {
             hasNext: pageNumber < totalPages,
         }
     }
+    if(products.length) {
+        await redisClient.set(
+            key,
+            JSON.stringify(finalRes),
+            {
+                EX: 300,
+            }
+        );
+    }
+
+    return finalRes;
 }
 
 
@@ -78,6 +107,7 @@ exports.create = async (body) => {
         if(typeof isFeatured !== 'undefined') {
             payload.isFeatured = isFeatured;
         }
+        await redisClient.incr("products:version");
 
         return productRepository.create(payload)
     } catch (e) {
@@ -110,7 +140,6 @@ exports.update = async (id, body) => {
         if(!brandFind) {
             throw createError("category not found", 404)
         }
-
         const payload = {
             name,
             slug: generateSlug(name),
@@ -123,6 +152,7 @@ exports.update = async (id, body) => {
         if(typeof isFeatured !== 'undefined') {
             payload.isFeatured = isFeatured;
         }
+        await redisClient.incr("products:version");
 
         return productRepository.update(id, payload)
     } catch (e) {
@@ -152,6 +182,7 @@ exports.addVariant = async (id, body) => {
 
         const isFirstVariant = !product.variants || product.variants.length === 0;
         const updateStatus = isFirstVariant ? "ACTIVE" : null;
+        await redisClient.incr("products:version");
 
         return await productRepository.addVariant(id, payload, updateStatus)
 
@@ -179,10 +210,10 @@ exports.updateVariantById = async (variantId, body) => {
 
         }
         const product = await productRepository.updateVariantById(variantId, payload)
-        console.log("product", product)
         if (!product) {
             throw createError("Variant not found", 404);
         }
+        await redisClient.incr("products:version");
 
         return product;
     } catch (e) {
@@ -215,6 +246,7 @@ exports.deleteVariant = async (variantId) => {
         if (product.variants.length === 0 && product.status === 'ACTIVE') {
             product = await productRepository.update(product._id, { status: 'INACTIVE' });
         }
+        await redisClient.incr("products:version");
 
         return product;
     } catch (e) {
