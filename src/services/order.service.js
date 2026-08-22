@@ -6,6 +6,7 @@ const cartRepository = require("../repositories/cart.repository");
 const createError = require("../utils/createError");
 const Counter = require("../models/counter.model");
 const { enqueueInvoiceEmail } = require("../queues/invoiceEmail.queue");
+const { enqueueOrderConfirmationEmail } = require("../queues/orderConfirmationEmail.queue");
 
 exports.getPaginateOrders = async ({page, limit, orderNumber, paymentStatus, status}) => {
     const pageNumber = Math.max(Number(page) || 1, 1);

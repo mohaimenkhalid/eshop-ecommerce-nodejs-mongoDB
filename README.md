@@ -1,6 +1,6 @@
 # Ecommerce Express MongoJS Starter
 
-A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes **Brand**, **Category**, **Product (with Variants & Images)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **Invoice Email pipeline** (PDF generation + email delivery via a BullMQ background worker).
+A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes **Brand**, **Category**, **Product (with Variants & Images)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order (admin status update) kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers.
 
 ## 🏗️ Project Architecture & Design Pattern
 
@@ -19,9 +19,9 @@ src/
 ├── services/           # Business Logic Layer (validation, orchestrating repositories, cache invalidation)
 │   ├── upload/          # Storage driver implementations (local, ...) behind UploadService
 │   └── email/            # Mail driver implementations (SMTP, ...) behind EmailService
-├── templates/           # HTML templates rendered to PDF (e.g. invoice)
+├── templates/           # HTML templates rendered to PDF/email (invoice, order confirmation)
 ├── utils/              # General helper functions (Slug generation, error factory)
-├── workers/             # BullMQ worker processes (e.g. invoice email worker)
+├── workers/             # BullMQ worker processes, auto-registered via workers/index.js
 ├── index.js            # Express application initialization & middleware bindings
 └── server.js           # Entry point (starts DB/Redis connections, boots workers, listens to port)
 ```
@@ -29,13 +29,19 @@ src/
 ### Decoupled Layers Flow:
 `HTTP Request` ➔ `Routes` ➔ `Middlewares (e.g. Auth Guard)` ➔ `Controller` ➔ `Service` ➔ `Repository` ➔ `Database (MongoDB)`
 
-### Order → Invoice Email Pipeline
+### Background Workers
 
-Placing a **COD** order enqueues a background job instead of blocking the request:
+`src/workers/index.js` auto-loads every `*.worker.js` file in that folder (`require("./workers")` in `server.js`) — dropping in a new worker file registers it automatically, no wiring needed elsewhere. Two workers/pipelines exist today:
 
-`Order created` ➔ `enqueueInvoiceEmail (BullMQ, Redis-backed)` ➔ **Worker**: fetch order/payment/user ➔ render invoice HTML ➔ generate PDF (Puppeteer) ➔ send email with the PDF attached (Nodemailer)
+**1. Order confirmation email** — fires the moment an order is placed, for any payment method:
 
-Both the PDF renderer and the mailer are driver-based (`UPLOAD_DRIVER`-style config) so the underlying provider (e.g. SMTP → SES/SendGrid) can be swapped without touching calling code. Other payment methods (Stripe/BKASH/etc.) are expected to trigger the same job once a payment-success flow is added for them — currently only COD orders enqueue immediately.
+`Order created` ➔ `enqueueOrderConfirmationEmail (BullMQ, Redis-backed)` ➔ **Worker**: fetch order + user ➔ render confirmation HTML ➔ send "order placed" email (Nodemailer)
+
+**2. Invoice email** — fires when an order's status is updated to `CONFIRMED` (`PATCH /orders/:orderId`):
+
+`Order status → CONFIRMED` ➔ `enqueueInvoiceEmail (BullMQ, Redis-backed)` ➔ **Worker**: fetch order/payment/user ➔ render invoice HTML ➔ generate PDF (Puppeteer) ➔ send email with the PDF attached (Nodemailer)
+
+Both queue producers enqueue from inside a try/catch so a queue/Redis failure never fails the underlying HTTP request — it's only logged. The PDF renderer and the mailer are driver-based (`UPLOAD_DRIVER`-style config) so the underlying provider (e.g. SMTP → SES/SendGrid) can be swapped without touching calling code.
 
 ---
 
@@ -44,7 +50,7 @@ Both the PDF renderer and the mailer are driver-based (`UPLOAD_DRIVER`-style con
 - **Node.js** & **Express (v5.x)** - Server runtime and framework.
 - **MongoDB** & **Mongoose (v9.x)** - Database and Object Data Modeling (ODM). Requires a **replica set** (transactions are used for order placement).
 - **Redis** - Caching layer (e.g. category list) and the backing store for BullMQ.
-- **BullMQ** & **ioredis** - Background job queue/worker for asynchronous invoice emailing.
+- **BullMQ** & **ioredis** - Background job queues/workers for asynchronous order confirmation and invoice emailing.
 - **Nodemailer** - Email delivery (SMTP driver by default).
 - **Puppeteer** - Renders HTML invoices to PDF (headless Chromium).
 - **JSON Web Tokens (JWT)** - Secure authorization.
@@ -175,6 +181,7 @@ _All order endpoints require a `Bearer` JWT._
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/orders` | Checkout the current user's cart into an order + payment record. For COD orders, this also enqueues the invoice email job. |
-| GET | `/orders` | Get all orders, paginated (admin-facing listing) |
-| GET | `/orders/me` | Get the current user's orders, paginated |
+| POST | `/orders` | Checkout the current user's cart into an order + payment record. Also enqueues the order confirmation email job. |
+| PATCH | `/orders/:orderId` | Update an order's status. Setting status to `CONFIRMED` also enqueues the invoice email job. |
+| GET | `/orders` | Get all orders, paginated (admin-facing listing, filterable by `orderNumber`/`paymentStatus`/`status`) |
+| GET | `/orders/me` | Get the current user's orders, paginated (same filters) |
