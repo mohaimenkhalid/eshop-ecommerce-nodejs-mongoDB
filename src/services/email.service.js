@@ -1,28 +1,10 @@
 const mailConfig = require("../config/mail.config");
 const createError = require("../utils/createError");
-
-const SmtpProvider = require("./email/smtp.provider");
-// const SesProvider = require("./email/ses.provider");
-// const SendgridProvider = require("./email/sendgrid.provider");
+const createMailProvider = require("./email/provider.factory");
 
 class EmailService {
-    constructor() {
-        switch (mailConfig.driver) {
-            case "smtp":
-                this.provider = new SmtpProvider();
-                break;
-
-            case "ses":
-                //this.provider = new SesProvider();
-                break;
-
-            case "sendgrid":
-                //this.provider = new SendgridProvider();
-                break;
-
-            default:
-                throw new Error(`Unsupported mail driver: ${mailConfig.driver}`);
-        }
+    constructor(provider = createMailProvider(mailConfig.driver)) {
+        this.provider = provider;
     }
 
     async sendMail({ to, subject, html, text, attachments }) {
@@ -34,4 +16,7 @@ class EmailService {
     }
 }
 
-module.exports = new EmailService();
+const emailService = new EmailService();
+
+module.exports = emailService;
+module.exports.EmailService = EmailService;
