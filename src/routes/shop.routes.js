@@ -21,7 +21,7 @@ const SHOP_MANAGE_ROLES = ["MERCHANT", "ADMIN", "SUPER_ADMIN"];
 router.get('/', shopController.getPaginateShops)
 router.get('/all', shopController.getAllShops)
 
-router.post('/create',
+router.post('/',
     authGuard,
     roleGuard(...SHOP_MANAGE_ROLES),
     shopUpload,
