@@ -11,7 +11,7 @@ src/
 ├── config/             # Configuration files (DB, Redis, BullMQ connection, upload/mail driver selection)
 ├── constants/           # Shared constants (e.g. allowed file mime types)
 ├── controllers/        # Route handlers (Parses HTTP requests & shapes responses)
-├── middlewares/        # Express middleware (Auth protection, upload handling, request validation, rate limiting & global error handling)
+├── middlewares/        # Express middleware (Auth protection, role gating, upload handling, request validation, rate limiting & global error handling)
 ├── models/             # Mongoose Schemas & Database models
 ├── queues/              # BullMQ queue definitions & job producers
 ├── repositories/       # Data Access Layer (Executes raw Mongoose queries)
@@ -66,6 +66,27 @@ Two read-heavy endpoints are cached in Redis, each with its own invalidation str
 - Over the limit → **429** with `{ success: false, message: "Too many requests. Please try again later." }`
 
 The limiter currently uses the default **in-memory store**, which is per-process. A `rate-limit-redis` store (`RedisStore` backed by the shared `redisClient`) is wired up but commented out — uncomment it to share counters across multiple instances.
+
+### Authorization Model
+
+Authorization is split across two layers instead of living in one place:
+
+| Layer | Question it answers | Where |
+|---|---|---|
+| `authGuard` | Is the JWT valid? | `middlewares/authGuard.middleware.js` |
+| `roleGuard(...roles)` | May this **role** perform this action? | `middlewares/roleGuard.middleware.js` |
+| Service-level assertion | Does this **specific record** belong to the caller? | e.g. `assertShopAccess()` in `services/shop.service.js` |
+
+`roleGuard` is a variadic middleware factory (`roleGuard("MERCHANT", "ADMIN")`) — resource-independent, so it needs no database read and is placed **before** the upload middleware, meaning an unauthorized request never writes a file to disk. Record-level ownership stays in the service layer so the rule holds for every caller (HTTP, worker, script), not just routed requests; admins bypass it.
+
+Current role matrix:
+
+| Resource | Read | Write |
+|---|---|---|
+| Brands, Categories | public | `ADMIN`, `SUPER_ADMIN` |
+| Products, Variants | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` |
+| Shops | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` + owner-only per record |
+| Carts, Orders | own records (JWT) | own records (JWT) |
 
 ---
 
@@ -158,6 +179,8 @@ All routes are mounted at the app root (e.g. `/categories`, not `/api/categories
 | POST | `/auth/signin` | Login and receive a JWT |
 
 ### Brands
+_Write endpoints require a `Bearer` JWT and an `ADMIN`/`SUPER_ADMIN` role._
+
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/brands` | Get paginated brands |
@@ -167,6 +190,8 @@ All routes are mounted at the app root (e.g. `/categories`, not `/api/categories
 | DELETE | `/brands/:id` | Delete a brand |
 
 ### Categories
+_Write endpoints require a `Bearer` JWT and an `ADMIN`/`SUPER_ADMIN` role._
+
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/categories` | Get paginated categories |
@@ -175,7 +200,21 @@ All routes are mounted at the app root (e.g. `/categories`, not `/api/categories
 | PATCH | `/categories/:id` | Update a category (with image upload) |
 | DELETE | `/categories/:id` | Delete a category |
 
+### Shops
+_Write endpoints require a `Bearer` JWT **and** a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role (`roleGuard` middleware). On top of that, a shop can only be updated/deleted by its own owner — admins bypass this (enforced in the service layer)._
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/shops` | Get paginated shops (filterable by `name`/`status`/`isFeatured`/`owner`) |
+| GET | `/shops/all` | Get all active shops |
+| GET | `/shops/:id` | Get a single shop |
+| POST | `/shops/create` | Create a shop (owner = logged-in user, with `logo` & `banner` upload) |
+| PATCH | `/shops/:id` | Update a shop (with `logo` & `banner` upload) |
+| DELETE | `/shops/:id` | Soft delete a shop |
+
 ### Products
+_Write endpoints require a `Bearer` JWT and a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role._
+
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/products` | Get paginated products, filterable by `name`/`category`/`brand` (Redis-cached, 300s) |
@@ -183,6 +222,8 @@ All routes are mounted at the app root (e.g. `/categories`, not `/api/categories
 | PATCH | `/products/:id` | Update a product |
 
 ### Product Variants
+_All variant endpoints require a `Bearer` JWT and a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role._
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/products/:id/variants` | Add a variant to a product |
