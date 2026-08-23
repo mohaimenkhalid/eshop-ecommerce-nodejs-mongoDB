@@ -1,6 +1,6 @@
 # Ecommerce Express MongoJS Starter
 
-A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes **Brand**, **Category**, **Product (with Variants & Images)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order (admin status update) kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers.
+A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes **Brand**, **Category**, **Product (with Variants & Images)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order (admin status update) kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, and every route group sits behind a **global rate limiter**.
 
 ## 🏗️ Project Architecture & Design Pattern
 
@@ -11,7 +11,7 @@ src/
 ├── config/             # Configuration files (DB, Redis, BullMQ connection, upload/mail driver selection)
 ├── constants/           # Shared constants (e.g. allowed file mime types)
 ├── controllers/        # Route handlers (Parses HTTP requests & shapes responses)
-├── middlewares/        # Express middleware (Auth protection, upload handling, request validation & global error handling)
+├── middlewares/        # Express middleware (Auth protection, upload handling, request validation, rate limiting & global error handling)
 ├── models/             # Mongoose Schemas & Database models
 ├── queues/              # BullMQ queue definitions & job producers
 ├── repositories/       # Data Access Layer (Executes raw Mongoose queries)
@@ -43,19 +43,44 @@ src/
 
 Both queue producers enqueue from inside a try/catch so a queue/Redis failure never fails the underlying HTTP request — it's only logged. The PDF renderer and the mailer are driver-based (`UPLOAD_DRIVER`-style config) so the underlying provider (e.g. SMTP → SES/SendGrid) can be swapped without touching calling code.
 
+### Caching (Redis)
+
+Two read-heavy endpoints are cached in Redis, each with its own invalidation strategy:
+
+**1. Category list** (`GET /categories/all`) — cached under a single `categories` key with no expiry. Any create/update/delete in `category.service.js` deletes the key, so the next read repopulates it.
+
+**2. Product list** (`GET /products`) — **versioned cache keys**, so paginated + filtered variants don't have to be tracked individually:
+
+`products:v{version}:page:{page}:limit:{limit}[:name:…][:category:…][:brand:…]`
+
+- The current version lives in the `products:version` counter (initialized to `1` on first read).
+- A hit returns the cached page (data + pagination) immediately; a miss queries MongoDB and caches the result for **300s** (empty result sets are not cached).
+- Any product or variant write (create, update, delete, image upload/delete) calls `INCR products:version`, which shifts every key prefix at once — all previously cached pages/filters are orphaned and expire on their own. No key scanning, no per-filter bookkeeping.
+
+### Rate Limiting
+
+`src/middlewares/rateLimiter.js` exposes `globalRateLimiter` (`express-rate-limit`), applied in `src/routes/index.js` to every route group — `/auth`, `/brands`, `/categories`, `/products`, `/carts`, `/orders`:
+
+- **100 requests per IP per 15-minute window**
+- `draft-8` standard `RateLimit-*` response headers (legacy `X-RateLimit-*` headers disabled)
+- Over the limit → **429** with `{ success: false, message: "Too many requests. Please try again later." }`
+
+The limiter currently uses the default **in-memory store**, which is per-process. A `rate-limit-redis` store (`RedisStore` backed by the shared `redisClient`) is wired up but commented out — uncomment it to share counters across multiple instances.
+
 ---
 
 ## 🛠️ Tech Stack & Dependencies
 
 - **Node.js** & **Express (v5.x)** - Server runtime and framework.
 - **MongoDB** & **Mongoose (v9.x)** - Database and Object Data Modeling (ODM). Requires a **replica set** (transactions are used for order placement).
-- **Redis** - Caching layer (e.g. category list) and the backing store for BullMQ.
+- **Redis** - Caching layer (product & category listings) and the backing store for BullMQ.
 - **BullMQ** & **ioredis** - Background job queues/workers for asynchronous order confirmation and invoice emailing.
 - **Nodemailer** - Email delivery (SMTP driver by default).
 - **Puppeteer** - Renders HTML invoices to PDF (headless Chromium).
 - **JSON Web Tokens (JWT)** - Secure authorization.
 - **Bcrypt** - Password hashing library.
 - **Multer** - Multipart file uploads (brand/category/product variant images).
+- **express-rate-limit** & **rate-limit-redis** - Global per-IP request throttling (Redis store available for multi-instance deployments).
 - **Joi** - Request body validation.
 - **Slugify** - Slug generator for title strings.
 - **Dotenv** - Configuration loading via environment variables.
@@ -118,13 +143,13 @@ Ensure you have the following installed on your local machine:
      npm start
      ```
 
-   Both commands boot the HTTP server **and** the invoice email worker in the same process (`src/server.js` requires `src/workers/invoiceEmail.worker.js` at startup) — no separate worker process is needed at this scale.
+   Both commands boot the HTTP server **and** all background workers in the same process (`src/server.js` requires `src/workers`, which auto-registers every `*.worker.js`) — no separate worker process is needed at this scale.
 
 ---
 
 ## 📡 API Endpoints
 
-All routes are mounted at the app root (e.g. `/categories`, not `/api/categories`).
+All routes are mounted at the app root (e.g. `/categories`, not `/api/categories`). Every route group is rate limited to 100 requests per IP per 15 minutes.
 
 ### Auth
 | Method | Endpoint | Description |
@@ -153,7 +178,7 @@ All routes are mounted at the app root (e.g. `/categories`, not `/api/categories
 ### Products
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/products` | Get paginated products |
+| GET | `/products` | Get paginated products, filterable by `name`/`category`/`brand` (Redis-cached, 300s) |
 | POST | `/products/create` | Create a product |
 | PATCH | `/products/:id` | Update a product |
 
