@@ -31,6 +31,13 @@ exports.signUpSchema = Joi.object({
             "string.max": "Password cannot exceed 20 characters",
             "any.required": "Password is required",
         }),
+    role: Joi.string()
+        .trim()
+        .valid("USER", "MERCHANT")
+        .messages({
+            "any.only": "Role must be either USER or MERCHANT",
+        })
+    ,
     phone: Joi.string()
         .allow("")
         .pattern(/^01[3-9]\d{8}$/)

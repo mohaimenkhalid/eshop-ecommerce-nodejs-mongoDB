@@ -10,13 +10,14 @@ const createError = (message, statusCode = 400, errors=null) => {
 };
 
 
-exports.signup = async ({ name, phone, email, password }) => {
+exports.signup = async ({ name, phone, email, password, role }) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     return userRepository.createUser({
         name,
         phone,
         email,
+        role,
         password: hashedPassword,
     });
 };
