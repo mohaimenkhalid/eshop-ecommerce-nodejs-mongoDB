@@ -1,12 +1,14 @@
+require('dotenv').config();
 const mongoose = require('mongoose')
 const Product = require('../models/product.model')
 const Shop = require('../models/shop.model')
 
 const migrate = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI)
-        const shop = Shop.findOne({
-            slug: ''
+        console.log(process.env.MONGO_URI)
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ecommerce')
+        const shop = await await Shop.findOne({
+            slug: 'shop-1'
         });
 
         if (!shop) {
@@ -24,6 +26,7 @@ const migrate = async () => {
         );
         console.log(`Matched: ${result.matchedCount}`);
         console.log(`Modified: ${result.modifiedCount}`);
+        await mongoose.disconnect();
 
     } catch (e) {
         console.log(e)

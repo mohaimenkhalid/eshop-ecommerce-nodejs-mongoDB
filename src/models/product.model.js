@@ -46,6 +46,11 @@ const variantSchema = new mongoose.Schema(
 
 const productSchema = new mongoose.Schema(
     {
+        shop: {
+            type: mongoose.Types.ObjectId,
+            ref: "Shop",
+            required: true,
+        },
         name: {
             type: String,
             required: true,
