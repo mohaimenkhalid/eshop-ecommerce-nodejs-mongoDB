@@ -34,13 +34,13 @@ exports.getTotalShopCount = async (filter) => {
 
 exports.getShopById = (id) => {
     return Shop.findById(id)
-        .populate('owner', 'name email phone')
+        .populate('owner', '_id name email phone')
         .lean();
 };
 
 exports.getShopBySlug = (slug) => {
     return Shop.findOne({ slug, isDeleted: false })
-        .populate('owner', 'name email phone')
+        .populate('owner', '_id name email phone')
         .lean();
 };
 

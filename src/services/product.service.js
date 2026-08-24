@@ -5,6 +5,7 @@ const brandRepository = require('../repositories/brand.reporsitory')
 const createError = require('../utils/createError')
 const uploadService = require('./upload.service')
 const {redisClient} = require('../config/redis')
+const shopRepository = require("../repositories/shop.repository");
 
 exports.getPaginateProducts = async ({page, limit, name, category, brand}) => {
     let version = await redisClient.get("products:version");
@@ -82,23 +83,23 @@ exports.getPaginateProducts = async ({page, limit, name, category, brand}) => {
 
 
 exports.create = async (body) => {
-    const {name, description, category, brand, isFeatured} = body;
+    const {name, description, shop, category, brand, isFeatured} = body;
     try {
 
         const categoryFind = await categoryRepository.getCategoryById(category)
-
         if(!categoryFind) {
             throw createError("category not found", 404)
         }
 
         const brandFind = await brandRepository.getBrandById(brand)
         if(!brandFind) {
-            throw createError("category not found", 404)
+            throw createError("brand not found", 404)
         }
 
         const payload = {
             name,
             slug: generateSlug(name),
+            shop,
             category,
             brand,
             description: description || "",
@@ -115,11 +116,14 @@ exports.create = async (body) => {
     }
 }
 
-exports.update = async (id, body) => {
+exports.update = async (id, body, userId) => {
     const {name, description, category, brand, isFeatured, status} = body;
     try {
-
         const product = await productRepository.getProductById(id);
+        if(product.shop.owner.toString() !== userId) {
+            throw createError("You can only update yours shop product", 403);
+        }
+
         if(!product) {
             throw createError("Product not found", 404);
         }
@@ -161,12 +165,15 @@ exports.update = async (id, body) => {
 }
 
 
-exports.addVariant = async (id, body) => {
+exports.addVariant = async (id, body, userId) => {
     const {sku, color, size, price, stock} = body;
     try {
         const product = await productRepository.getProductById(id);
         if(!product) {
             throw createError("Product not found", 404);
+        }
+        if(product.shop.owner.toString() !== userId) {
+            throw createError("You can only update yours shop product", 403);
         }
         const findSku = await product.variants.find(v => v.sku === sku.toUpperCase())
         if (findSku) {
@@ -191,7 +198,7 @@ exports.addVariant = async (id, body) => {
     }
 }
 
-exports.updateVariantById = async (variantId, body) => {
+exports.updateVariantById = async (variantId, body, userId) => {
     const {sku, color, size, price, stock} = body;
     try {
         const payload = {
@@ -213,6 +220,7 @@ exports.updateVariantById = async (variantId, body) => {
         if (!product) {
             throw createError("Variant not found", 404);
         }
+
         await redisClient.incr("products:version");
 
         return product;
@@ -221,7 +229,7 @@ exports.updateVariantById = async (variantId, body) => {
     }
 }
 
-exports.deleteVariant = async (variantId) => {
+exports.deleteVariant = async (variantId, userId) => {
     try {
         const variant = await productRepository.findVariantById(variantId);
         if (!variant) {
@@ -254,7 +262,7 @@ exports.deleteVariant = async (variantId) => {
     }
 }
 
-exports.addVariantImages = async (variantId, files) => {
+exports.addVariantImages = async (variantId, files, userId) => {
     try {
         if (!files || files.length === 0) {
             throw createError('At least one image is required.', 400);
@@ -276,7 +284,7 @@ exports.addVariantImages = async (variantId, files) => {
     }
 }
 
-exports.deleteVariantImage = async (variantId, imageUrl) => {
+exports.deleteVariantImage = async (variantId, imageUrl, userId) => {
     try {
         const existing = await productRepository.findVariantById(variantId);
         if (!existing) {

@@ -1,49 +1,49 @@
 const Joi = require("joi");
 
-const variantSchema = Joi.object({
-    sku: Joi.string()
-        .trim()
-        .uppercase()
-        .required()
-        .messages({
-            "string.empty": "SKU is required",
-            "any.required": "SKU is required",
-        }),
-
-    color: Joi.string()
-        .trim()
-        .allow("")
-        .optional(),
-
-    size: Joi.string()
-        .trim()
-        .allow("")
-        .optional(),
-
-    price: Joi.number()
-        .min(0)
-        .required()
-        .messages({
-            "number.base": "Price must be a number",
-            "number.min": "Price cannot be negative",
-            "any.required": "Price is required",
-        }),
-
-    stock: Joi.number()
-        .integer()
-        .min(0)
-        .required()
-        .messages({
-            "number.base": "Stock must be a number",
-            "number.integer": "Stock must be an integer",
-            "number.min": "Stock cannot be negative",
-            "any.required": "Stock is required",
-        }),
-
-    images: Joi.array()
-        .items(Joi.string())
-        .default([]),
-});
+// const variantSchema = Joi.object({
+//     sku: Joi.string()
+//         .trim()
+//         .uppercase()
+//         .required()
+//         .messages({
+//             "string.empty": "SKU is required",
+//             "any.required": "SKU is required",
+//         }),
+//
+//     color: Joi.string()
+//         .trim()
+//         .allow("")
+//         .optional(),
+//
+//     size: Joi.string()
+//         .trim()
+//         .allow("")
+//         .optional(),
+//
+//     price: Joi.number()
+//         .min(0)
+//         .required()
+//         .messages({
+//             "number.base": "Price must be a number",
+//             "number.min": "Price cannot be negative",
+//             "any.required": "Price is required",
+//         }),
+//
+//     stock: Joi.number()
+//         .integer()
+//         .min(0)
+//         .required()
+//         .messages({
+//             "number.base": "Stock must be a number",
+//             "number.integer": "Stock must be an integer",
+//             "number.min": "Stock cannot be negative",
+//             "any.required": "Stock is required",
+//         }),
+//
+//     images: Joi.array()
+//         .items(Joi.string())
+//         .default([]),
+// });
 
 
 exports.createProductSchema = Joi.object({
@@ -65,6 +65,16 @@ exports.createProductSchema = Joi.object({
         .allow("")
         .optional()
     ,
+    shop: Joi.string()
+        .hex()
+        .length(24)
+        .required()
+        .messages({
+            "string.base": "shop must be a valid ID",
+            "string.hex": "shop must be a valid ID",
+            "string.length": "shop ID must be exactly 24 characters long",
+            "any.required": "shop is required",
+        }),
 
     category: Joi.string()
         .hex()
@@ -139,6 +149,16 @@ exports.updateProductSchema = Joi.object({
         .allow("")
         .optional()
     ,
+    shop: Joi.string()
+        .hex()
+        .length(24)
+        .required()
+        .messages({
+            "string.base": "shop must be a valid ID",
+            "string.hex": "shop must be a valid ID",
+            "string.length": "shop ID must be exactly 24 characters long",
+            "any.required": "shop is required",
+        }),
 
     category: Joi.string()
         .hex()

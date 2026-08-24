@@ -30,7 +30,7 @@ exports.update = async (id, payload, options = {}) => {
 }
 
 exports.getProductById = (id) => {
-    return  Product.findById(id).lean();
+    return  Product.findById(id).populate('shop').lean();
 }
 
 exports.getProductsWithIds = async (productIds) => {

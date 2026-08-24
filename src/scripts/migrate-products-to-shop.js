@@ -37,4 +37,4 @@ const migrate = async () => {
 
 migrate()
 
-//node scripts/migrate-products-to-shop.js
+//node src/scripts/migrate-products-to-shop.js
