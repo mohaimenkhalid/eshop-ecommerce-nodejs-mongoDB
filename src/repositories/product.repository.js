@@ -121,6 +121,10 @@ exports.findVariantById = async (variantId) => {
     return product.variants.id(variantId);
 };
 
+exports.findProductByVariantId = async (variantId) => {
+    return Product.findOne({ 'variants._id': variantId }).populate('shop');
+};
+
 
 exports.deleteVariant = async (variantId) => {
     return await Product.findOneAndUpdate(

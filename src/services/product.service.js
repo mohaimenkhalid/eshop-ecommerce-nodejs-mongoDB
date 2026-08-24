@@ -201,6 +201,14 @@ exports.addVariant = async (id, body, userId) => {
 exports.updateVariantById = async (variantId, body, userId) => {
     const {sku, color, size, price, stock} = body;
     try {
+        const product = await productRepository.findProductByVariantId(variantId);
+        if (!product) {
+            throw createError("Variant not found", 404);
+        }
+        if (product.shop.owner.toString() !== userId) {
+            throw createError("You can only update yours shop product", 403);
+        }
+
         const payload = {
             sku,
             color,
@@ -216,14 +224,14 @@ exports.updateVariantById = async (variantId, body, userId) => {
             }
 
         }
-        const product = await productRepository.updateVariantById(variantId, payload)
-        if (!product) {
+        const updatedVariant = await productRepository.updateVariantById(variantId, payload)
+        if (!updatedVariant) {
             throw createError("Variant not found", 404);
         }
 
         await redisClient.incr("products:version");
 
-        return product;
+        return updatedVariant;
     } catch (e) {
         throw e
     }
@@ -231,14 +239,18 @@ exports.updateVariantById = async (variantId, body, userId) => {
 
 exports.deleteVariant = async (variantId, userId) => {
     try {
-        const variant = await productRepository.findVariantById(variantId);
-        if (!variant) {
+        const product = await productRepository.findProductByVariantId(variantId);
+        if (!product) {
             throw createError('Variant not found', 404);
         }
+        if (product.shop.owner.toString() !== userId) {
+            throw createError("You can only update yours shop product", 403);
+        }
 
+        const variant = product.variants.id(variantId);
         const imagesToDelete = variant.images || [];
 
-        let product = await productRepository.deleteVariant(variantId);
+        let updatedProduct = await productRepository.deleteVariant(variantId);
 
         // Unlink all images associated with the deleted variant
         if (imagesToDelete.length > 0) {
@@ -251,12 +263,12 @@ exports.deleteVariant = async (variantId, userId) => {
             }
         }
 
-        if (product.variants.length === 0 && product.status === 'ACTIVE') {
-            product = await productRepository.update(product._id, { status: 'INACTIVE' });
+        if (updatedProduct.variants.length === 0 && updatedProduct.status === 'ACTIVE') {
+            updatedProduct = await productRepository.update(updatedProduct._id, { status: 'INACTIVE' });
         }
         await redisClient.incr("products:version");
 
-        return product;
+        return updatedProduct;
     } catch (e) {
         throw e;
     }
@@ -269,9 +281,12 @@ exports.addVariantImages = async (variantId, files, userId) => {
         }
 
         // Verify the variant exists
-        const existing = await productRepository.findVariantById(variantId);
-        if (!existing) {
+        const product = await productRepository.findProductByVariantId(variantId);
+        if (!product) {
             throw createError('Variant not found', 404);
+        }
+        if (product.shop.owner.toString() !== userId) {
+            throw createError("You can only update yours shop product", 403);
         }
 
         // Upload all files (works for both single and multiple)
@@ -286,11 +301,15 @@ exports.addVariantImages = async (variantId, files, userId) => {
 
 exports.deleteVariantImage = async (variantId, imageUrl, userId) => {
     try {
-        const existing = await productRepository.findVariantById(variantId);
-        if (!existing) {
+        const product = await productRepository.findProductByVariantId(variantId);
+        if (!product) {
             throw createError('Variant not found', 404);
         }
+        if (product.shop.owner.toString() !== userId) {
+            throw createError("You can only update yours shop product", 403);
+        }
 
+        const existing = product.variants.id(variantId);
         if (!existing.images.includes(imageUrl)) {
             throw createError('Image not found on this variant', 404);
         }
