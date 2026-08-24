@@ -1,6 +1,6 @@
 # Ecommerce Express MongoJS Starter
 
-A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** and includes **Brand**, **Category**, **Product (with Variants & Images)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order (admin status update) kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, and every route group sits behind a **global rate limiter**.
+A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** (with an optional `MERCHANT` role opt-in at signup) and includes **Brand**, **Category**, **Shop**, **Product (with Variants & Images, scoped to a Shop)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order (admin status update) kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, and every route group sits behind a **global rate limiter**.
 
 ## 🏗️ Project Architecture & Design Pattern
 
@@ -75,17 +75,20 @@ Authorization is split across two layers instead of living in one place:
 |---|---|---|
 | `authGuard` | Is the JWT valid? | `middlewares/authGuard.middleware.js` |
 | `roleGuard(...roles)` | May this **role** perform this action? | `middlewares/roleGuard.middleware.js` |
-| Service-level assertion | Does this **specific record** belong to the caller? | e.g. `assertShopAccess()` in `services/shop.service.js` |
+| Service-level assertion | Does this **specific record** belong to the caller? | e.g. `assertShopAccess()` in `services/shop.service.js`; a `product.shop.owner` equality check in `services/product.service.js` |
 
-`roleGuard` is a variadic middleware factory (`roleGuard("MERCHANT", "ADMIN")`) — resource-independent, so it needs no database read and is placed **before** the upload middleware, meaning an unauthorized request never writes a file to disk. Record-level ownership stays in the service layer so the rule holds for every caller (HTTP, worker, script), not just routed requests; admins bypass it.
+`roleGuard` is a variadic middleware factory (`roleGuard("MERCHANT", "ADMIN")`) — resource-independent, so it needs no database read and is placed **before** the upload middleware, meaning an unauthorized request never writes a file to disk. Record-level ownership stays in the service layer so the rule holds for every caller (HTTP, worker, script), not just routed requests.
+
+Note the two resources differ in one way: `assertShopAccess()` (shops) explicitly **lets `ADMIN`/`SUPER_ADMIN` bypass** the ownership check; the product/variant owner check does **not** bypass for admins yet — it's a plain "does the caller's `userId` match `product.shop.owner`" comparison.
 
 Current role matrix:
 
 | Resource | Read | Write |
 |---|---|---|
 | Brands, Categories | public | `ADMIN`, `SUPER_ADMIN` |
-| Products, Variants | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` |
-| Shops | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` + owner-only per record |
+| Products | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` (creation takes `shop` as given, with no ownership check; update is owner-only, no admin bypass) |
+| Product Variants | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` + owner-only per record (add/update/delete variant, add/delete variant image), no admin bypass |
+| Shops | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` + owner-only per record (admins bypass) |
 | Carts, Orders | own records (JWT) | own records (JWT) |
 
 ---
@@ -175,7 +178,7 @@ All routes are mounted at the app root (e.g. `/categories`, not `/api/categories
 ### Auth
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/auth/signup` | Register a new user |
+| POST | `/auth/signup` | Register a new user. Optional `role` field: `USER` (default) or `MERCHANT` — lets a merchant opt in at signup instead of needing an admin to promote them |
 | POST | `/auth/signin` | Login and receive a JWT |
 
 ### Brands
@@ -213,24 +216,24 @@ _Write endpoints require a `Bearer` JWT **and** a `MERCHANT`/`ADMIN`/`SUPER_ADMI
 | DELETE | `/shops/:id` | Soft delete a shop |
 
 ### Products
-_Write endpoints require a `Bearer` JWT and a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role._
+_Write endpoints require a `Bearer` JWT and a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role. Every product belongs to a `shop` (`Product.shop`); `PATCH` additionally requires the caller to be that shop's owner (checked in `product.service.js`, no admin bypass yet)._
 
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/products` | Get paginated products, filterable by `name`/`category`/`brand` (Redis-cached, 300s) |
-| POST | `/products/create` | Create a product |
-| PATCH | `/products/:id` | Update a product |
+| POST | `/products/create` | Create a product under a `shop` (`shop` is a required body field; the caller's ownership of that shop is not currently verified) |
+| PATCH | `/products/:id` | Update a product (owner-only) |
 
 ### Product Variants
-_All variant endpoints require a `Bearer` JWT and a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role._
+_All variant endpoints require a `Bearer` JWT and a `MERCHANT`/`ADMIN`/`SUPER_ADMIN` role, plus ownership of the parent product's shop — the service resolves the parent product from the `variantId` (`findProductByVariantId`) and compares `product.shop.owner` to the caller, no admin bypass yet._
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/products/:id/variants` | Add a variant to a product |
-| PATCH | `/products/variants/:variantId` | Update a variant |
-| DELETE | `/products/variants/:variantId` | Delete a variant (also removes its images) |
-| POST | `/products/variants/:variantId/images` | Upload images (up to 10) for a variant |
-| DELETE | `/products/variants/:variantId/image` | Delete a single variant image |
+| POST | `/products/:id/variants` | Add a variant to a product (owner-only) |
+| PATCH | `/products/variants/:variantId` | Update a variant (owner-only) |
+| DELETE | `/products/variants/:variantId` | Delete a variant (also removes its images, owner-only) |
+| POST | `/products/variants/:variantId/images` | Upload images (up to 10) for a variant (owner-only) |
+| DELETE | `/products/variants/:variantId/image` | Delete a single variant image (owner-only) |
 
 ### Cart
 _All cart endpoints require a `Bearer` JWT._
