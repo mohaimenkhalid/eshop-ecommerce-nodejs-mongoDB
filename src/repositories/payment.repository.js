@@ -20,3 +20,11 @@ exports.updatePaymentById = (id, payload, options = {}) => {
         ...options,
     });
 };
+
+exports.updatePaymentByOrderId = (orderId, payload, options = {}) => {
+    return Payment.findOneAndUpdate({ order: orderId }, payload, {
+        returnDocument: "after",
+        runValidators: true,
+        ...options,
+    });
+};

@@ -1,4 +1,5 @@
 const orderService = require("../services/order.service");
+const paymentService = require("../services/payment.service");
 
 exports.createOrder = async (req, res, next) => {
     try {
@@ -7,12 +8,28 @@ exports.createOrder = async (req, res, next) => {
             req.body
         );
 
+        let checkout = null;
+        if (order.paymentMethod === "STRIPE") {
+            try {
+                checkout = await paymentService.createCheckoutSession(
+                    req.user.userId,
+                    order._id
+                );
+            } catch (checkoutError) {
+                console.error(
+                    `Failed to create a checkout session for order ${order.orderNumber}:`,
+                    checkoutError.message
+                );
+            }
+        }
+
         return res.status(201).json({
             success: true,
             message: "Order placed successfully",
             data: {
                 order,
                 payment,
+                checkout,
             },
         });
     } catch (error) {

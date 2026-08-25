@@ -30,7 +30,7 @@ const paymentSchema = new Schema(
 
         paymentMethod: {
             type: String,
-            enum: ["COD", "BKASH", "NAGAD", "CARD"],
+            enum: ["COD", "BKASH", "NAGAD", "CARD", "STRIPE"],
             required: true,
         },
 
@@ -53,6 +53,14 @@ const paymentSchema = new Schema(
         },
 
         transactionId: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        // Stripe Checkout Session id (cs_...), used to verify the payment when
+        // the customer returns from the hosted page.
+        gatewayReference: {
             type: String,
             trim: true,
             default: null,
