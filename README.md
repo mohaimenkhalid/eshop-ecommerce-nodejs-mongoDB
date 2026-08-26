@@ -1,6 +1,6 @@
 # Ecommerce Express MongoJS Starter
 
-A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** (with an optional `MERCHANT` role opt-in at signup) and includes **Brand**, **Category**, **Shop**, **Product (with Variants & Images, scoped to a Shop)**, **Cart**, and **Order** APIs built on the Controller-Service-Repository pattern. Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order (admin status update) kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, and every route group sits behind a **global rate limiter**.
+A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** (with an optional `MERCHANT` role opt-in at signup) and includes **Brand**, **Category**, **Shop**, **Product (with Variants & Images, scoped to a Shop)**, **Cart**, **Order**, and **Payment** APIs built on the Controller-Service-Repository pattern. Orders can be placed **COD** or online via a driver-based **Stripe Checkout** integration (opt-in — the app still boots as a COD-only shop with no Stripe env vars set). Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order — either an admin status update or a verified Stripe payment — kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, and every route group sits behind a **global rate limiter**.
 
 ## 🏗️ Project Architecture & Design Pattern
 
@@ -8,7 +8,7 @@ The project is structured around the **Controller-Service-Repository** design pa
 
 ```text
 src/
-├── config/             # Configuration files (DB, Redis, BullMQ connection, upload/mail driver selection)
+├── config/             # Configuration files (DB, Redis, BullMQ connection, upload/mail/payment driver selection)
 ├── constants/           # Shared constants (e.g. allowed file mime types)
 ├── controllers/        # Route handlers (Parses HTTP requests & shapes responses)
 ├── middlewares/        # Express middleware (Auth protection, role gating, upload handling, request validation, rate limiting & global error handling)
@@ -18,7 +18,8 @@ src/
 ├── routes/             # Route declarations mapping endpoints to controllers
 ├── services/           # Business Logic Layer (validation, orchestrating repositories, cache invalidation)
 │   ├── upload/          # Storage driver implementations (local, ...) behind UploadService
-│   └── email/            # Mail driver implementations (SMTP, ...) behind EmailService
+│   ├── email/            # Mail driver implementations (SMTP, ...) behind EmailService
+│   └── payment/          # Payment gateway driver implementations (Stripe, ...) behind provider.factory.js
 ├── templates/           # HTML templates rendered to PDF/email (invoice, order confirmation)
 ├── utils/              # General helper functions (Slug generation, error factory)
 ├── workers/             # BullMQ worker processes, auto-registered via workers/index.js
@@ -37,11 +38,24 @@ src/
 
 `Order created` ➔ `enqueueOrderConfirmationEmail (BullMQ, Redis-backed)` ➔ **Worker**: fetch order + user ➔ render confirmation HTML ➔ send "order placed" email (Nodemailer)
 
-**2. Invoice email** — fires when an order's status is updated to `CONFIRMED` (`PATCH /orders/:orderId`):
+**2. Invoice email** — fires when an order's status is updated to `CONFIRMED` (`PATCH /orders/:orderId`), or automatically the moment a Stripe payment is confirmed as paid:
 
 `Order status → CONFIRMED` ➔ `enqueueInvoiceEmail (BullMQ, Redis-backed)` ➔ **Worker**: fetch order/payment/user ➔ render invoice HTML ➔ generate PDF (Puppeteer) ➔ send email with the PDF attached (Nodemailer)
 
 Both queue producers enqueue from inside a try/catch so a queue/Redis failure never fails the underlying HTTP request — it's only logged. The PDF renderer and the mailer are driver-based (`UPLOAD_DRIVER`-style config) so the underlying provider (e.g. SMTP → SES/SendGrid) can be swapped without touching calling code.
+
+### Payments (Stripe Checkout)
+
+Online payment is a separate, opt-in `PAYMENT_DRIVER` behind the same driver-factory pattern as uploads/mail (`src/services/payment/provider.factory.js`; only `stripe` is implemented today, `sslcommerz`/`bkash` are stubbed). The driver auto-detects to `stripe` when `STRIPE_SECRET_KEY` is set, or `none` (COD-only) otherwise — an install with neither keeps booting. The provider is built lazily on first use, so a misconfigured/missing Stripe key doesn't crash boot, only the first checkout call (`503`).
+
+Flow for a `STRIPE` order (`Order.paymentMethod === "STRIPE"`, set at checkout like any other payment method):
+
+1. **`POST /payments/stripe/checkout-session`** — validates the order belongs to the caller, is a `STRIPE` order, and isn't already `PAID`; creates a Stripe-hosted Checkout Session (one line item for the whole order total, in the smallest currency unit) and stores its id as `Payment.gatewayReference`. Returns the session `url` to redirect the customer to.
+2. **`GET /payments/stripe/return`** — Stripe's `success_url` target, so it has **no auth guard** (the customer arrives with no `Authorization` header). It never trusts the redirect itself: it re-fetches the session from Stripe by id and only then marks the payment `SUCCESS` / order `PAID` + `CONFIRMED` (which enqueues the invoice email). If `PAYMENT_RETURN_REDIRECT_URL` is set, the customer is redirected there (`?status=paid|expired|pending|error`) instead of getting raw JSON — handy for a frontend, optional for a pure API client.
+3. **`POST /payments/order/:orderId/sync`** — on-demand reconciliation ("check payment status" button) for a customer who paid and closed the tab before the return redirect fired; asks Stripe about the stored session and applies the same paid-order logic.
+4. **`GET /payments/order/:orderId`** — reads the stored `Payment`; if it's still `PENDING` with a `gatewayReference`, it transparently syncs with Stripe first so the response reflects reality.
+
+All four paths that can discover a payment succeeded (return redirect, on-demand sync, and the read-through sync on `GET`) funnel through one `applyPaidSession` function in `payment.service.js`, so the "mark paid + confirm order + enqueue invoice" side effect only lives in one place.
 
 ### Caching (Redis)
 
@@ -59,7 +73,7 @@ Two read-heavy endpoints are cached in Redis, each with its own invalidation str
 
 ### Rate Limiting
 
-`src/middlewares/rateLimiter.js` exposes `globalRateLimiter` (`express-rate-limit`), applied in `src/routes/index.js` to every route group — `/auth`, `/brands`, `/categories`, `/products`, `/carts`, `/orders`:
+`src/middlewares/rateLimiter.js` exposes `globalRateLimiter` (`express-rate-limit`), applied in `src/routes/index.js` to every route group — `/auth`, `/brands`, `/categories`, `/shops`, `/products`, `/carts`, `/orders`, `/payments`:
 
 - **100 requests per IP per 15-minute window**
 - `draft-8` standard `RateLimit-*` response headers (legacy `X-RateLimit-*` headers disabled)
@@ -101,6 +115,7 @@ Current role matrix:
 - **BullMQ** & **ioredis** - Background job queues/workers for asynchronous order confirmation and invoice emailing.
 - **Nodemailer** - Email delivery (SMTP driver by default).
 - **Puppeteer** - Renders HTML invoices to PDF (headless Chromium).
+- **Stripe** - Hosted Checkout for online payments (opt-in driver; app runs COD-only without it).
 - **JSON Web Tokens (JWT)** - Secure authorization.
 - **Bcrypt** - Password hashing library.
 - **Multer** - Multipart file uploads (brand/category/product variant images).
@@ -155,6 +170,14 @@ Ensure you have the following installed on your local machine:
    SMTP_USER=your_smtp_user
    SMTP_PASS=your_smtp_pass
    EMAIL_FROM="Shop Name <no-reply@example.com>"
+
+   # Optional — leave STRIPE_SECRET_KEY empty to run as a COD-only shop
+   PAYMENT_DRIVER=stripe
+   STRIPE_SECRET_KEY=sk_test_xxx
+   STRIPE_CURRENCY=usd
+   STRIPE_SUCCESS_URL=http://localhost:3000/payments/stripe/return?session_id={CHECKOUT_SESSION_ID}
+   STRIPE_CANCEL_URL=http://localhost:3000/carts
+   PAYMENT_RETURN_REDIRECT_URL=http://localhost:5173/order-status
    ```
 
 4. **Running the Application:**
@@ -211,7 +234,7 @@ _Write endpoints require a `Bearer` JWT **and** a `MERCHANT`/`ADMIN`/`SUPER_ADMI
 | GET | `/shops` | Get paginated shops (filterable by `name`/`status`/`isFeatured`/`owner`) |
 | GET | `/shops/all` | Get all active shops |
 | GET | `/shops/:id` | Get a single shop |
-| POST | `/shops/create` | Create a shop (owner = logged-in user, with `logo` & `banner` upload) |
+| POST | `/shops` | Create a shop (owner = logged-in user, with `logo` & `banner` upload) |
 | PATCH | `/shops/:id` | Update a shop (with `logo` & `banner` upload) |
 | DELETE | `/shops/:id` | Soft delete a shop |
 
@@ -254,3 +277,13 @@ _All order endpoints require a `Bearer` JWT._
 | PATCH | `/orders/:orderId` | Update an order's status. Setting status to `CONFIRMED` also enqueues the invoice email job. |
 | GET | `/orders` | Get all orders, paginated (admin-facing listing, filterable by `orderNumber`/`paymentStatus`/`status`) |
 | GET | `/orders/me` | Get the current user's orders, paginated (same filters) |
+
+### Payments
+_Requires the `stripe` driver to be configured (`STRIPE_SECRET_KEY` set); otherwise these return `503`. All endpoints require a `Bearer` JWT except the Stripe return callback, which Stripe calls directly._
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/payments/stripe/checkout-session` | Create a Stripe Checkout session for one of the caller's own `STRIPE`-method orders; returns the hosted checkout `url` |
+| GET | `/payments/stripe/return` | Stripe `success_url` callback (no auth) — verifies the session with Stripe, marks the payment/order paid, and redirects to `PAYMENT_RETURN_REDIRECT_URL` if set, else returns JSON |
+| POST | `/payments/order/:orderId/sync` | On-demand reconciliation — re-checks the order's Stripe session and applies the result (owner or admin) |
+| GET | `/payments/order/:orderId` | Get the payment record for an order, auto-syncing with Stripe first if it's still `PENDING` (owner or admin) |
