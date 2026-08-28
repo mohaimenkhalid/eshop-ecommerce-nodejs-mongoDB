@@ -54,3 +54,51 @@ exports.userCountReport = async () => {
         }
     ])
 }
+
+
+exports.orderRevenueSummary = async () => {
+    return Order.aggregate([
+        {
+            $group: {
+                _id: null,
+
+                totalOrders: {
+                    $sum: 1
+                },
+                totalPaid: {
+                    $sum: {
+                        $cond: [
+                            {$eq: ["$paymentStatus", "PAID"]}, 1, 0
+                        ]
+                    }
+                },
+
+                totalRevenue: {
+                    $sum: {
+                        $cond: [
+                            { $eq: ["$paymentStatus", "PAID"] },
+                            "$total",
+                            0
+                        ]
+                    }
+                },
+                avgOrderValue: {
+                    $avg: {
+                        $cond: [
+                            { $eq: ["$paymentStatus", "PAID"] },
+                            "$total",
+                            0
+                        ]
+                    }
+                },
+
+                highestOrder: {
+                    $max: "$total"
+                },
+                lowestOrder: {
+                    $min: "$total"
+                },
+            }
+        }
+    ])
+}

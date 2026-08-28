@@ -15,3 +15,11 @@ exports.userCountReport = async (req, res) => {
         data: data
     })
 }
+
+exports.orderRevenueSummary = async (req, res) => {
+    const data = await reportService.orderRevenueSummary();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

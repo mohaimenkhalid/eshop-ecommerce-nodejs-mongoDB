@@ -7,3 +7,7 @@ exports.orderStatusWiseSummary = async () => {
 exports.userCountReport = async () => {
     return await reportRepository.userCountReport()
 }
+
+exports.orderRevenueSummary = async () => {
+    return await reportRepository.orderRevenueSummary()
+}
