@@ -7,3 +7,11 @@ exports.orderStatusWiseSummary = async (req, res) => {
         data: data
     })
 }
+
+exports.userCountReport = async (req, res) => {
+    const data = await reportService.userCountReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

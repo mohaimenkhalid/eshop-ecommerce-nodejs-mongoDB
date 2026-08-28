@@ -187,7 +187,6 @@ exports.confirmCheckoutSession = async (sessionId) => {
     };
 };
 
-// Reconcile on demand — what a "check payment status" button calls.
 exports.syncOrderPayment = async (orderId, { userId, role }) => {
     const order = await orderRepository.getOrderById(orderId);
     if (!order) {

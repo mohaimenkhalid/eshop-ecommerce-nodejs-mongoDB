@@ -8,6 +8,7 @@ const productRoutes = require('./product.routes')
 const cartRoutes = require('./cart.routes')
 const orderRoutes = require('./order.routes')
 const paymentRoutes = require('./payment.routes')
+const reportRoutes = require('./report.routes')
 const {globalRateLimiter} = require('../middlewares/rateLimiter')
 
 router.use('/auth', globalRateLimiter, authRoutes)
@@ -18,5 +19,6 @@ router.use('/products', globalRateLimiter, productRoutes)
 router.use('/carts', globalRateLimiter, cartRoutes)
 router.use('/orders', globalRateLimiter, orderRoutes)
 router.use('/payments', globalRateLimiter, paymentRoutes)
+router.use('/reports', reportRoutes)
 
 module.exports = router;
