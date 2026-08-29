@@ -11,3 +11,7 @@ exports.userCountReport = async () => {
 exports.orderRevenueSummary = async () => {
     return await reportRepository.orderRevenueSummary()
 }
+
+exports.discountDeliveryChargeReport = async () => {
+    return await reportRepository.discountDeliveryChargeReport()
+}

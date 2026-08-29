@@ -102,3 +102,50 @@ exports.orderRevenueSummary = async () => {
         }
     ])
 }
+
+exports.discountDeliveryChargeReport = async () => {
+    return Order.aggregate([
+        {
+            $match: {
+                paymentStatus: 'PAID'
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalOrderAmount: {
+                    $sum: "$total"
+                },
+                totalDiscount: {
+                    $sum: "$discount"
+                },
+                totalDeliveryCharge: {
+                    $sum: "$deliveryCharge"
+                }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                totalOrderAmount: 1,
+                totalDiscount: 1,
+                totalDeliveryCharge: 1,
+
+                totalDiscountAndDelivery: {
+                    $sum: ["$totalDiscount", "$totalDeliveryCharge"]
+                },
+                discountPercentage: {
+                    $multiply: [
+                        {
+                            $divide: [
+                                "$totalDiscount",
+                                "$totalOrderAmount"
+                            ]
+                        },
+                        100
+                    ]
+                }
+            }
+        }
+    ])
+}
