@@ -19,3 +19,7 @@ exports.discountDeliveryChargeReport = async () => {
 exports.topSellingProducts = async () => {
     return await reportRepository.topSellingProducts()
 }
+
+exports.topSellingVariantsSkuWise = async () => {
+    return await reportRepository.topSellingVariantsSkuWise()
+}

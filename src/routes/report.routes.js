@@ -7,5 +7,6 @@ router.get('/user-count-report', reportController.userCountReport)
 router.get('/order-revenue-summary', reportController.orderRevenueSummary)
 router.get('/discount-deliveryCharge-report', reportController.discountDeliveryChargeReport)
 router.get('/top-selleing-products', reportController.topSellingProducts)
+router.get('/top-selleing-varients-sku-wise', reportController.topSellingVariantsSkuWise)
 
 module.exports = router

@@ -55,7 +55,6 @@ exports.userCountReport = async () => {
     ])
 }
 
-
 exports.orderRevenueSummary = async () => {
     return Order.aggregate([
         {
@@ -170,5 +169,36 @@ exports.topSellingProducts = () => {
         },
         { $limit: 10 }
 
+    ])
+}
+
+exports.topSellingVariantsSkuWise = () => {
+    return Order.aggregate([
+        {
+            $match: {
+                paymentStatus: "PAID"
+            }
+        },
+        { $unwind: "$items" },
+        {
+            $group: {
+                _id: "$items.sku",
+                variantName: {$first: "$items.variantName"},
+                totalAmount: {
+                    $sum: "$total"
+                },
+                totalQuantity: {
+                    $sum: "$items.quantity"
+                }
+            }
+        },
+        {
+            $sort: {
+                totalQuantity: -1
+            }
+        },
+        {
+            $limit: 10
+        }
     ])
 }

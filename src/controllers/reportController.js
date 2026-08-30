@@ -39,3 +39,11 @@ exports.topSellingProducts = async (req, res) => {
         data: data
     })
 }
+
+exports.topSellingVariantsSkuWise = async (req, res) => {
+    const data = await reportService.topSellingVariantsSkuWise();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}
