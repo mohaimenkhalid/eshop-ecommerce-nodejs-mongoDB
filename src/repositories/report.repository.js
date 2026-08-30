@@ -35,7 +35,7 @@ exports.userCountReport = async () => {
                 active: {
                     $sum: {
                         $cond: [
-                            { $eq: ["$status", "ACTIVE"] },
+                            {$eq: ["$status", "ACTIVE"]},
                             1,
                             0
                         ]
@@ -44,7 +44,7 @@ exports.userCountReport = async () => {
                 inActive: {
                     $sum: {
                         $cond: [
-                            { $eq: ["$status", "INACTIVE"] },
+                            {$eq: ["$status", "INACTIVE"]},
                             1,
                             0
                         ]
@@ -76,7 +76,7 @@ exports.orderRevenueSummary = async () => {
                 totalRevenue: {
                     $sum: {
                         $cond: [
-                            { $eq: ["$paymentStatus", "PAID"] },
+                            {$eq: ["$paymentStatus", "PAID"]},
                             "$total",
                             0
                         ]
@@ -85,7 +85,7 @@ exports.orderRevenueSummary = async () => {
                 avgOrderValue: {
                     $avg: {
                         $cond: [
-                            { $eq: ["$paymentStatus", "PAID"] },
+                            {$eq: ["$paymentStatus", "PAID"]},
                             "$total",
                             0
                         ]
@@ -153,17 +153,22 @@ exports.discountDeliveryChargeReport = () => {
 exports.topSellingProducts = () => {
     return Order.aggregate([
         {
-            $match: { paymentStatus: "PAID" },
+            $match: {paymentStatus: "PAID"},
         },
-        { $unwind: "$items" },
+        {$unwind: "$items"},
         {
             $group: {
                 _id: "$items.productId",
-                productName: { $first: "$items.productName" },
-                totalQuantity: { $sum: "$items.quantity" },
-                totalRevenue: { $sum: "$items.total" },
-                orderCount: { $sum: 1 }
+                productName: {$first: "$items.productName"},
+                totalQuantity: {$sum: "$items.quantity"},
+                totalRevenue: {$sum: "$total"},
+                orderCount: {$sum: 1}
             }
-        }
+        },
+        {
+            $sort: { totalQuantity: -1 }
+        },
+        { $limit: 10 }
+
     ])
 }
