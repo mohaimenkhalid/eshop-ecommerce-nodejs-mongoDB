@@ -15,3 +15,7 @@ exports.orderRevenueSummary = async () => {
 exports.discountDeliveryChargeReport = async () => {
     return await reportRepository.discountDeliveryChargeReport()
 }
+
+exports.topSellingProducts = async () => {
+    return await reportRepository.topSellingProducts()
+}

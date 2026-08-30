@@ -31,3 +31,11 @@ exports.discountDeliveryChargeReport = async (req, res) => {
         data: data
     })
 }
+
+exports.topSellingProducts = async (req, res) => {
+    const data = await reportService.topSellingProducts();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

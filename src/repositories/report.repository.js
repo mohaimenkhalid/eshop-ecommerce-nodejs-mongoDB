@@ -103,7 +103,7 @@ exports.orderRevenueSummary = async () => {
     ])
 }
 
-exports.discountDeliveryChargeReport = async () => {
+exports.discountDeliveryChargeReport = () => {
     return Order.aggregate([
         {
             $match: {
@@ -145,6 +145,24 @@ exports.discountDeliveryChargeReport = async () => {
                         100
                     ]
                 }
+            }
+        }
+    ])
+}
+
+exports.topSellingProducts = () => {
+    return Order.aggregate([
+        {
+            $match: { paymentStatus: "PAID" },
+        },
+        { $unwind: "$items" },
+        {
+            $group: {
+                _id: "$items.productId",
+                productName: { $first: "$items.productName" },
+                totalQuantity: { $sum: "$items.quantity" },
+                totalRevenue: { $sum: "$items.total" },
+                orderCount: { $sum: 1 }
             }
         }
     ])
