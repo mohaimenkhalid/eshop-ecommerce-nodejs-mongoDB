@@ -182,12 +182,16 @@ exports.topSellingVariantsSkuWise = () => {
         { $unwind: "$items" },
         {
             $group: {
-                _id: "$items.sku",
+                _id: {
+                    p: "$items.productId",
+                    v: "$items.variantId"
+                },
+                productName: {$first: "$items.productName"},
                 variantName: {$first: "$items.variantName"},
                 totalAmount: {
                     $sum: "$total"
                 },
-                totalQuantity: {
+                totalSold: {
                     $sum: "$items.quantity"
                 }
             }
