@@ -47,3 +47,11 @@ exports.topSellingVariantsSkuWise = async (req, res) => {
         data: data
     })
 }
+
+exports.lowStockAlertReport = async (req, res) => {
+    const data = await reportService.lowStockAlertReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

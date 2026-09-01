@@ -23,3 +23,7 @@ exports.topSellingProducts = async () => {
 exports.topSellingVariantsSkuWise = async () => {
     return await reportRepository.topSellingVariantsSkuWise()
 }
+
+exports.lowStockAlertReport = async () => {
+    return await reportRepository.lowStockAlertReport()
+}

@@ -1,5 +1,6 @@
 const Order = require('../models/order.model');
 const User = require('../models/user.model');
+const Product = require('../models/product.model');
 
 exports.orderStatusWiseSummary = async () => {
     return Order.aggregate([
@@ -198,11 +199,37 @@ exports.topSellingVariantsSkuWise = () => {
         },
         {
             $sort: {
-                totalQuantity: -1
+                totalSold: -1
             }
         },
         {
             $limit: 10
+        }
+    ])
+}
+
+exports.lowStockAlertReport = () => {
+    return Product.aggregate([
+        {
+            $match: { isDeleted: false, status: "ACTIVE" }
+        },
+        { $unwind: "$variants" },
+        {
+            $match: {
+                "variants.stock": {$lt: 10}
+            }
+        },
+        {
+            $project: {
+                name: 1,
+                sku: "$variants.sku",
+                stock: "$variants.stock",
+                price: "$variants.price",
+                image: { $arrayElemAt: ["$variants.images", 0] }
+            }
+        },
+        {
+            $sort: { stock: 1 }
         }
     ])
 }
