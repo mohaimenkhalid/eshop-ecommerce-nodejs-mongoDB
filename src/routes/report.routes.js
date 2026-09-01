@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const reportController = require('../controllers/reportController')
+const authGuard = require('../middlewares/authGuard.middleware')
+const roleGuard = require('../middlewares/roleGuard.middleware')
+
+//reports expose store-wide/admin data, so only admins may read them
+const REPORT_VIEW_ROLES = ["ADMIN", "SUPER_ADMIN"];
+
+router.use(authGuard, roleGuard(...REPORT_VIEW_ROLES))
 
 router.get('/order-status-wise-summary', reportController.orderStatusWiseSummary)
 router.get('/user-count-report', reportController.userCountReport)

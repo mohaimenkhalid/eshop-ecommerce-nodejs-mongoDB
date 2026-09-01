@@ -1,6 +1,6 @@
 # Ecommerce Express MongoJS Starter
 
-A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** (with an optional `MERCHANT` role opt-in at signup) and includes **Brand**, **Category**, **Shop**, **Product (with Variants & Images, scoped to a Shop)**, **Cart**, **Order**, and **Payment** APIs built on the Controller-Service-Repository pattern. Orders can be placed **COD** or online via a driver-based **Stripe Checkout** integration (opt-in — the app still boots as a COD-only shop with no Stripe env vars set). Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order — either an admin status update or a verified Stripe payment — kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, and every route group sits behind a **global rate limiter**.
+A standard, production-ready RESTful API starter template for an E-commerce system. Built with **Node.js**, **Express.js**, and **MongoDB (Mongoose)**, this template comes pre-configured with secure **User Authentication** (with an optional `MERCHANT` role opt-in at signup) and includes **Brand**, **Category**, **Shop**, **Product (with Variants & Images, scoped to a Shop)**, **Cart**, **Order**, and **Payment** APIs built on the Controller-Service-Repository pattern. Orders can be placed **COD** or online via a driver-based **Stripe Checkout** integration (opt-in — the app still boots as a COD-only shop with no Stripe env vars set). Placing an order kicks off an asynchronous **order confirmation email**, and confirming an order — either an admin status update or a verified Stripe payment — kicks off an **Invoice Email pipeline** (PDF generation + email delivery) — both run via auto-registered BullMQ background workers. Read-heavy listings (**products**, **categories**) are served through a **Redis cache** with write-triggered invalidation, every route group sits behind a **global rate limiter**, and a set of MongoDB **aggregation-based reports** (orders, revenue, top sellers, low stock) is exposed under `/reports`.
 
 ## 🏗️ Project Architecture & Design Pattern
 
@@ -104,6 +104,7 @@ Current role matrix:
 | Product Variants | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` + owner-only per record (add/update/delete variant, add/delete variant image), no admin bypass |
 | Shops | public | `MERCHANT`, `ADMIN`, `SUPER_ADMIN` + owner-only per record (admins bypass) |
 | Carts, Orders | own records (JWT) | own records (JWT) |
+| Reports | `ADMIN`, `SUPER_ADMIN` | n/a (read-only) |
 
 ---
 
@@ -287,3 +288,16 @@ _Requires the `stripe` driver to be configured (`STRIPE_SECRET_KEY` set); otherw
 | GET | `/payments/stripe/return` | Stripe `success_url` callback (no auth) — verifies the session with Stripe, marks the payment/order paid, and redirects to `PAYMENT_RETURN_REDIRECT_URL` if set, else returns JSON |
 | POST | `/payments/order/:orderId/sync` | On-demand reconciliation — re-checks the order's Stripe session and applies the result (owner or admin) |
 | GET | `/payments/order/:orderId` | Get the payment record for an order, auto-syncing with Stripe first if it's still `PENDING` (owner or admin) |
+
+### Reports
+_Admin-facing MongoDB aggregation reports. Every endpoint requires a `Bearer` JWT and an `ADMIN`/`SUPER_ADMIN` role. None take query params (filters/limits are hardcoded in the aggregation pipelines)._
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/reports/order-status-wise-summary` | Order count + total amount grouped by order `status` |
+| GET | `/reports/user-count-report` | User count grouped by `role`, split into `active`/`inActive` by `status` (excludes soft-deleted users) |
+| GET | `/reports/order-revenue-summary` | Store-wide totals across all orders: order count, paid count, revenue, average/highest/lowest order value (revenue figures only count `paymentStatus: PAID` orders) |
+| GET | `/reports/discount-deliveryCharge-report` | Totals for discount and delivery charge across `PAID` orders, plus discount-as-percentage-of-order-amount |
+| GET | `/reports/top-selleing-products` | Top 10 products by quantity sold, from `PAID` orders |
+| GET | `/reports/top-selleing-varients-sku-wise` | Top 10 product variants (SKU-level) by quantity sold, from `PAID` orders |
+| GET | `/reports/low-stock-alert-report` | Active products with any variant under 10 units in stock, sorted lowest stock first |
