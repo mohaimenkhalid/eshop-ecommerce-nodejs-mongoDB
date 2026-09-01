@@ -27,3 +27,7 @@ exports.topSellingVariantsSkuWise = async () => {
 exports.lowStockAlertReport = async () => {
     return await reportRepository.lowStockAlertReport()
 }
+
+exports.inventoryValuationReport = async () => {
+    return await reportRepository.inventoryValuationReport()
+}

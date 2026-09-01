@@ -233,3 +233,38 @@ exports.lowStockAlertReport = () => {
         }
     ])
 }
+
+exports.inventoryValuationReport = () => {
+    return Product.aggregate([
+        {
+            $match: { isDeleted: false, status: "ACTIVE" }
+        },
+        { $unwind: "$variants" },
+        {
+            $group: {
+                _id: null,
+                totalStockValue: {
+                    $sum: {
+                        $multiply: ["$variants.stock", "$variants.price"]
+                    }
+                },
+                productCount: {
+                    $addToSet: "$_id" //unique ids set to an array
+                },
+                variantCount: {
+                    $sum: 1
+                }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                totalStockValue: 1,
+                productCount: {
+                    $size: "$productCount"
+                },
+                variantCount: 1
+            }
+        }
+    ])
+}
