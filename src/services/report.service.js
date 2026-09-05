@@ -31,3 +31,7 @@ exports.lowStockAlertReport = async () => {
 exports.inventoryValuationReport = async () => {
     return await reportRepository.inventoryValuationReport()
 }
+
+exports.productWisePriceRangeReport = async () => {
+    return await reportRepository.productWisePriceRangeReport()
+}

@@ -63,3 +63,11 @@ exports.inventoryValuationReport = async (req, res) => {
         data: data
     })
 }
+
+exports.productWisePriceRangeReport = async (req, res) => {
+    const data = await reportService.productWisePriceRangeReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

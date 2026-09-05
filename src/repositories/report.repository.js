@@ -268,3 +268,47 @@ exports.inventoryValuationReport = () => {
         }
     ])
 }
+
+exports.productWisePriceRangeReport = () => {
+
+    //SOLUTION 1:
+
+    // return Product.aggregate([
+    //     {
+    //         $match: { isDeleted: false, status: "ACTIVE" }
+    //     },
+    //     {
+    //         $unwind: "$variants"
+    //     },
+    //     {
+    //         $group: {
+    //             _id: "$_id",
+    //             maxVariantPrice: { $max: "$variants.price" },
+    //             minVariantPrice: { $min: "$variants.price" },
+    //         }
+    //     }
+    // ])
+
+    // Solution 2:
+
+    return Product.aggregate([
+        {
+            $match: { isDeleted: false, status: "ACTIVE" }
+        },
+        {
+            $set: { //add new properties with $set
+                maxVariantPrice: { $max: "$variants.price" },
+                minVariantPrice: { $min: "$variants.price" }
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+                maxVariantPrice: 1,
+                minVariantPrice: 1
+            }
+        }
+    ])
+}

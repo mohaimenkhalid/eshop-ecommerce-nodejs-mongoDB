@@ -17,5 +17,6 @@ router.get('/top-selleing-products', reportController.topSellingProducts)
 router.get('/top-selleing-varients-sku-wise', reportController.topSellingVariantsSkuWise)
 router.get('/low-stock-alert-report', reportController.lowStockAlertReport)
 router.get('/inventory-valuation-report', reportController.inventoryValuationReport)
+router.get('/product-wise-price-range-report', reportController.productWisePriceRangeReport)
 
 module.exports = router
