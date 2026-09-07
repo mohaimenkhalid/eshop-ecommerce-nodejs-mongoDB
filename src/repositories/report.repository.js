@@ -312,3 +312,48 @@ exports.productWisePriceRangeReport = () => {
         }
     ])
 }
+
+exports.topCustomerBySpending = () => {
+    return Order.aggregate([
+        {
+            $group: {
+                _id: "$user",
+                totalOrderCount: {
+                    $sum: 1
+                },
+                totalSpendAmount: {
+                    $sum: "$total"
+                },
+                avgOrderValue: {
+                    $avg: "$total"
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "_id",
+                pipeline: [
+                    {
+                        $project: {
+                            name: 1,
+                            email: 1,
+                            phone: 1,
+                            avatar: 1
+                        }
+                    }
+                ],
+                as: "user",
+            }
+        },
+        {
+            $sort: {
+                totalSpendAmount: -1
+            }
+        },
+        {
+            $limit: 10
+        }
+    ])
+}

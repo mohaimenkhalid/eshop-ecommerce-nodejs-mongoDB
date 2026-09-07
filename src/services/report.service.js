@@ -35,3 +35,7 @@ exports.inventoryValuationReport = async () => {
 exports.productWisePriceRangeReport = async () => {
     return await reportRepository.productWisePriceRangeReport()
 }
+
+exports.topCustomerBySpending = async () => {
+    return await reportRepository.topCustomerBySpending()
+}

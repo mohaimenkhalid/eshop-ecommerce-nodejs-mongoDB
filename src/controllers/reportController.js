@@ -71,3 +71,11 @@ exports.productWisePriceRangeReport = async (req, res) => {
         data: data
     })
 }
+
+exports.topCustomerBySpending = async (req, res) => {
+    const data = await reportService.topCustomerBySpending();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}
