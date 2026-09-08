@@ -47,3 +47,6 @@ exports.categoryWiseSalesReport = async () => {
 exports.brandWiseSalesReport = async () => {
     return await reportRepository.brandWiseSalesReport()
 }
+exports.shopWiseSalesReport = async () => {
+    return await reportRepository.shopWiseSalesReport()
+}

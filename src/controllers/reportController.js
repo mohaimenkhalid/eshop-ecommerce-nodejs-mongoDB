@@ -94,3 +94,11 @@ exports.brandWiseSalesReport = async (req, res) => {
         data: data
     })
 }
+
+exports.shopWiseSalesReport = async (req, res) => {
+    const data = await reportService.shopWiseSalesReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

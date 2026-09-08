@@ -444,3 +444,37 @@ exports.brandWiseSalesReport = () => {
         }
     ])
 }
+
+exports.shopWiseSalesReport = () => {
+    return Order.aggregate([
+        { $match: { paymentStatus: "PAID" } },
+        { $unwind: "$items" },
+        {
+            $lookup: {
+                from: "products",
+                localField: "items.productId",
+                foreignField: "_id",
+                as: "product"
+            }
+        },
+        { $unwind: "$product" },
+        {
+            $lookup: {
+                from: "shops",
+                localField: "product.shop",
+                foreignField: "_id",
+                as: "shop"
+            }
+        },
+        {$unwind: "$shop"},
+        {
+            $lookup: {
+                from: "users",
+                localField: "shop.owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {$unwind: "$owner"}
+    ])
+}
