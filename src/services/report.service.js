@@ -43,3 +43,7 @@ exports.topCustomerBySpending = async () => {
 exports.categoryWiseSalesReport = async () => {
     return await reportRepository.categoryWiseSalesReport()
 }
+
+exports.brandWiseSalesReport = async () => {
+    return await reportRepository.brandWiseSalesReport()
+}

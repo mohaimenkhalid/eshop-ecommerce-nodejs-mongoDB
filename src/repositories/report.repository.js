@@ -405,3 +405,42 @@ exports.categoryWiseSalesReport = () => {
         }
     ])
 }
+
+exports.brandWiseSalesReport = () => {
+    return Order.aggregate([
+        { $match: { "paymentStatus": "PAID" } },
+        { $unwind: "$items" },
+        {
+            $lookup: {
+                from: "products",
+                localField: "items.productId",
+                foreignField: "_id",
+                as: "product"
+            }
+        },
+        { $unwind: "$product" },
+        {
+            $group: {
+                _id: "$product.brand",
+                totalSaleAmount: { $sum: "$items.totalPrice"},
+                totalQuantity: { $sum: "$items.quantity"}
+            }
+        },
+        {
+            $lookup: {
+                from: 'brands',
+                localField: "_id",
+                foreignField: "_id",
+                as: 'brand'
+            }
+        },
+        {$unwind: "$brand"},
+        {
+            $project: {
+                brand: "$brand.name",
+                totalSaleAmount: 1,
+                totalQuantity: 1
+            }
+        }
+    ])
+}

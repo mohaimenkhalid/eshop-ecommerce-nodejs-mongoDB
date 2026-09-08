@@ -87,3 +87,10 @@ exports.categoryWiseSalesReport = async (req, res) => {
         data: data
     })
 }
+exports.brandWiseSalesReport = async (req, res) => {
+    const data = await reportService.brandWiseSalesReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

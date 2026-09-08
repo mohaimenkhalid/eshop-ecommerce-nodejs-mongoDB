@@ -21,6 +21,7 @@ router.get('/product-wise-price-range-report', reportController.productWisePrice
 router.get('/top-customer-by-spending', reportController.topCustomerBySpending)
 //level 3
 router.get('/category-wise-sales-report', reportController.categoryWiseSalesReport)
+router.get('/brand-wise-sales-report', reportController.brandWiseSalesReport)
 
 
 module.exports = router
