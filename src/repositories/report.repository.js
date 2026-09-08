@@ -385,20 +385,22 @@ exports.categoryWiseSalesReport = () => {
                 localField: "_id",
                 foreignField: "_id",
                 as: "category",
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 1,
-                            name: 1,
-                        }
-                    }
-                ]
+                // pipeline: [
+                //     {
+                //         $project: {
+                //             _id: 1,
+                //             name: 1,
+                //         }
+                //     }
+                // ]
             }
         },
         { $unwind: '$category' },
         {
             $project: {
-                _id: 0,
+                category: "$category.name",
+                totalAmountSale: 1,
+                totalQuantity: 1
             }
         }
     ])
