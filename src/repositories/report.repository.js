@@ -357,3 +357,49 @@ exports.topCustomerBySpending = () => {
         }
     ])
 }
+
+
+exports.categoryWiseSalesReport = () => {
+    return Order.aggregate([
+        { $match: { paymentStatus: "PAID" } },
+        { $unwind: "$items" },
+        {
+            $lookup: {
+                from: "products",
+                localField: "items.productId",
+                foreignField: "_id",
+                as: "product",
+            }
+        },
+        { $unwind: "$product" },
+        {
+            $group: {
+                _id: "$product.category",
+                totalAmountSale: { $sum: "$items.totalPrice" },
+                totalQuantity: { $sum: "$items.quantity" }
+            }
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: "_id",
+                foreignField: "_id",
+                as: "category",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        { $unwind: '$category' },
+        {
+            $project: {
+                _id: 0,
+            }
+        }
+    ])
+}

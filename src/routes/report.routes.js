@@ -8,7 +8,7 @@ const roleGuard = require('../middlewares/roleGuard.middleware')
 const REPORT_VIEW_ROLES = ["ADMIN", "SUPER_ADMIN"];
 
 // router.use(authGuard, roelGuard(...REPORT_VIEW_ROLES))
-
+//level 1-2
 router.get('/order-status-wise-summary', reportController.orderStatusWiseSummary)
 router.get('/user-count-report', reportController.userCountReport)
 router.get('/order-revenue-summary', reportController.orderRevenueSummary)
@@ -19,5 +19,8 @@ router.get('/low-stock-alert-report', reportController.lowStockAlertReport)
 router.get('/inventory-valuation-report', reportController.inventoryValuationReport)
 router.get('/product-wise-price-range-report', reportController.productWisePriceRangeReport)
 router.get('/top-customer-by-spending', reportController.topCustomerBySpending)
+//level 3
+router.get('/category-wise-sales-report', reportController.categoryWiseSalesReport)
+
 
 module.exports = router

@@ -79,3 +79,11 @@ exports.topCustomerBySpending = async (req, res) => {
         data: data
     })
 }
+
+exports.categoryWiseSalesReport = async (req, res) => {
+    const data = await reportService.categoryWiseSalesReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}
