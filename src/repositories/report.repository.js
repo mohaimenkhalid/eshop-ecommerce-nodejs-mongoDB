@@ -1,6 +1,7 @@
 const Order = require('../models/order.model');
 const User = require('../models/user.model');
 const Product = require('../models/product.model');
+const Shop = require('../models/shop.model');
 
 exports.orderStatusWiseSummary = async () => {
     return Order.aggregate([
@@ -475,6 +476,64 @@ exports.shopWiseSalesReport = () => {
                 as: "owner"
             }
         },
-        {$unwind: "$owner"}
+        {$unwind: "$owner"},
+        {
+            $group: {
+                _id: "$shop._id",
+                shop: { $first: "$shop.name" },
+                shopOwner: { $first: "$owner.name" },
+                totalOrderCount: { $sum: 1 },
+                totalOrderAmount: { $sum: "$items.totalPrice" },
+            }
+        }
+    ])
+}
+
+exports.shopWisePerformanceDashboard = () => {
+    return Shop.aggregate([
+        {$match: { isDeleted: false }},
+        {
+            $lookup: {
+                from: "products",
+                localField: "_id",
+                foreignField: "shop",
+                as: "products"
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                shopName: "$name",
+                totalProducts: { $size: "$products"},
+                totalActiveProducts: {
+                    $size: {
+                        $filter: {
+                            input: "$products",
+                            as: "product",
+                            cond: {
+                                $eq: ["$$product.status", "ACTIVE"]
+                            }
+                        }
+                    }
+                },
+                totalStock: {
+                    $sum: {
+                        $map: {
+                            input: "$products",
+                            as: "product",
+                            in: {
+                                $reduce: {
+                                    input: "$$product.variants",
+                                    initialValue: 0,
+                                    in: {
+                                        $add: ["$$value", "$$this.stock"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     ])
 }

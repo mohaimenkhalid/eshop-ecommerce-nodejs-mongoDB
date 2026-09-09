@@ -50,3 +50,6 @@ exports.brandWiseSalesReport = async () => {
 exports.shopWiseSalesReport = async () => {
     return await reportRepository.shopWiseSalesReport()
 }
+exports.shopWisePerformanceDashboard = async () => {
+    return await reportRepository.shopWisePerformanceDashboard()
+}
