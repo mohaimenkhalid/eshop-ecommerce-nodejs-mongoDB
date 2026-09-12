@@ -53,3 +53,6 @@ exports.shopWiseSalesReport = async () => {
 exports.shopWisePerformanceDashboard = async () => {
     return await reportRepository.shopWisePerformanceDashboard()
 }
+exports.neverSoldProductsReport = async () => {
+    return await reportRepository.neverSoldProductsReport()
+}

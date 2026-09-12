@@ -31,7 +31,6 @@
    category/brand/shop-wise report-এ `$lookup` লাগবে, কারণ ওগুলো snapshot-এ নাই।
 2. `categories.parentCategory` নিজের collection-কেই ref করে — এটা `$graphLookup`
    শেখার জন্য পারফেক্ট।
-
 ---
 
 # LEVEL 1 — `$match` `$group` `$sum` `$count`

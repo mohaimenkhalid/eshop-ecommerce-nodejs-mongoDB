@@ -24,6 +24,7 @@ router.get('/category-wise-sales-report', reportController.categoryWiseSalesRepo
 router.get('/brand-wise-sales-report', reportController.brandWiseSalesReport)
 router.get('/shop-wise-sales-report', reportController.shopWiseSalesReport)
 router.get('/shop-wise-performance-dashboard', reportController.shopWisePerformanceDashboard)
+router.get('/never-sold-products-report', reportController.neverSoldProductsReport)
 
 
 module.exports = router

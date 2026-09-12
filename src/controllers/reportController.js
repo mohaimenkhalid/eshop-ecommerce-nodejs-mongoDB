@@ -110,3 +110,11 @@ exports.shopWisePerformanceDashboard = async (req, res) => {
         data: data
     })
 }
+
+exports.neverSoldProductsReport = async (req, res) => {
+    const data = await reportService.neverSoldProductsReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

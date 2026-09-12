@@ -537,3 +537,20 @@ exports.shopWisePerformanceDashboard = () => {
         }
     ])
 }
+
+exports.neverSoldProductsReport = () => {
+    return Product.aggregate([
+        {
+            $match: { status: "ACTIVE" }
+        },
+        {
+            $lookup: {
+                from: "orders",
+                localField: "_id",
+                foreignField: "items.productId",
+                as: "orders"
+            }
+        },
+        { $match: { orders: { $size: 0 } }}
+    ])
+}
