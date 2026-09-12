@@ -587,3 +587,59 @@ exports.paymentReconciliationReport = () => {
         }
     ]);
 };
+
+exports.customerDetailsReport = () => {
+    return User.aggregate([
+        { $match: { role: "USER" } },
+        {
+            $lookup: {
+                from: "orders",
+                localField: "_id",
+                foreignField: "user",
+                as: "orders"
+            }
+        },
+        // {
+        //     $set: {
+        //         orderCount: { $size: "$orders" },
+        //         totalSpent: { $sum: "$orders.total" },
+        //         lastOrderDate: { $max: "$orders.createdAt" }
+        //     }
+        // },
+        {
+            $lookup: {
+                from: "addresses",
+
+                let: {
+                    userId: "$_id"
+                },
+
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$user", "$$userId"] },
+                                    { $eq: ["$isDefault", true] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+
+                as: "defaultAddress"
+            }
+        },
+        {
+            $project: {
+                name: 1,
+                email: 1,
+                phone: 1,
+                orderCount: { $size: "$orders" },
+                totalSpent: { $sum: "$orders.total" },
+                lastOrderDate: { $max: "$orders.createdAt" },
+                defaultAddress: 1
+            }
+        }
+    ])
+}

@@ -126,3 +126,11 @@ exports.paymentReconciliationReport = async (req, res) => {
         data: data
     })
 }
+
+exports.customerDetailsReport = async (req, res) => {
+    const data = await reportService.customerDetailsReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

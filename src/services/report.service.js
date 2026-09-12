@@ -59,3 +59,6 @@ exports.neverSoldProductsReport = async () => {
 exports.paymentReconciliationReport = async () => {
     return await reportRepository.paymentReconciliationReport()
 }
+exports.customerDetailsReport = async () => {
+    return await reportRepository.customerDetailsReport()
+}
