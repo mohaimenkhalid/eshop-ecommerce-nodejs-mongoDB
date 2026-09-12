@@ -62,3 +62,6 @@ exports.paymentReconciliationReport = async () => {
 exports.customerDetailsReport = async () => {
     return await reportRepository.customerDetailsReport()
 }
+exports.dailySalesTrend = async () => {
+    return await reportRepository.dailySalesTrend()
+}

@@ -661,3 +661,9 @@ exports.customerDetailsReport = () => {
         }
     ])
 }
+
+exports.dailySalesTrend = () => {
+    return Order.aggregate([
+        { $match: { paymentStatus: "PAID"} }
+    ])
+}

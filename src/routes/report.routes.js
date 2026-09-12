@@ -27,6 +27,8 @@ router.get('/shop-wise-performance-dashboard', reportController.shopWisePerforma
 router.get('/never-sold-products-report', reportController.neverSoldProductsReport)
 router.get('/payment-reconciliation-report', reportController.paymentReconciliationReport)
 router.get('/customer-details-report', reportController.customerDetailsReport)
+//Level 4 //chart type data
+router.get('/daily-sales-trend', reportController.dailySalesTrend)
 
 
 module.exports = router

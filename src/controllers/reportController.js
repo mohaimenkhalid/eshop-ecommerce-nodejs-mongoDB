@@ -134,3 +134,11 @@ exports.customerDetailsReport = async (req, res) => {
         data: data
     })
 }
+
+exports.dailySalesTrend = async (req, res) => {
+    const data = await reportService.dailySalesTrend();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}
