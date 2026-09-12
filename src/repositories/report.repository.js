@@ -630,6 +630,12 @@ exports.customerDetailsReport = () => {
                 as: "defaultAddress"
             }
         },
+        // {
+        //     $unwind: {
+        //         path: "$defaultAddress",
+        //         preserveNullAndEmptyArrays: true
+        //     }
+        // },
         {
             $project: {
                 name: 1,
@@ -638,7 +644,19 @@ exports.customerDetailsReport = () => {
                 orderCount: { $size: "$orders" },
                 totalSpent: { $sum: "$orders.total" },
                 lastOrderDate: { $max: "$orders.createdAt" },
-                defaultAddress: 1
+                // defaultAddress: {
+                //     $ifNull: [
+                //         { $arrayElemAt: ["$defaultAddress", 0] },
+                //         null
+                //     ]
+                // }
+                defaultAddress: {
+                    $cond: {
+                        if: { $gt: [{ $size: "$defaultAddress" }, 0] },
+                        then: { $arrayElemAt: ["$defaultAddress", 0] },
+                        else: null
+                    }
+                }
             }
         }
     ])
