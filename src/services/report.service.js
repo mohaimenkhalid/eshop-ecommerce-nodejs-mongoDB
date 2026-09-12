@@ -56,3 +56,6 @@ exports.shopWisePerformanceDashboard = async () => {
 exports.neverSoldProductsReport = async () => {
     return await reportRepository.neverSoldProductsReport()
 }
+exports.paymentReconciliationReport = async () => {
+    return await reportRepository.paymentReconciliationReport()
+}

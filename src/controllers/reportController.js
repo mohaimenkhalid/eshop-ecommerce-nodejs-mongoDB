@@ -118,3 +118,11 @@ exports.neverSoldProductsReport = async (req, res) => {
         data: data
     })
 }
+
+exports.paymentReconciliationReport = async (req, res) => {
+    const data = await reportService.paymentReconciliationReport();
+    res.status(200).send({
+        success: true,
+        data: data
+    })
+}

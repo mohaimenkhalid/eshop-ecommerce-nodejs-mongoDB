@@ -554,3 +554,36 @@ exports.neverSoldProductsReport = () => {
         { $match: { orders: { $size: 0 } }}
     ])
 }
+
+exports.paymentReconciliationReport = () => {
+    return Order.aggregate([
+        {
+            $match: {
+                paymentStatus: "PAID"
+            }
+        },
+        {
+            $lookup: {
+                from: "payments",
+                localField: "_id",
+                foreignField: "order",
+                let: {
+                    orderPrice: "$total"
+                },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $ne: ["$$orderPrice", "$amount"]
+                            }
+                        }
+                    }
+                ],
+                as: "payment"
+            }
+        },
+        {
+            $unwind: "$payment"
+        }
+    ]);
+};
